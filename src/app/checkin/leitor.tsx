@@ -9,12 +9,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { buscarInscritos, checkinPorCodigo, checkinPorInscricao, type Inscrito, type ResultadoCheckin } from "./actions";
 
-// Verde/âmbar/vermelho distintos, AA nos dois temas (mesmo critério do --sucesso medido na Tarefa 1).
+// Verde/âmbar/vermelho distintos; contraste texto/fundo medido ≥ 4,5:1 nos dois temas
+// (tabela completa, par a par, no IMPLEMENTACAO.md da issue #21).
 const COR = {
   ok: "border-sucesso bg-sucesso/10 text-sucesso",
   repetido: "border-amber-500 bg-amber-50 text-amber-950 dark:bg-amber-950 dark:text-amber-50",
-  outro_evento: "border-destructive bg-destructive/10 text-destructive",
-  desconhecido: "border-destructive bg-destructive/10 text-destructive",
+  outro_evento: "border-destructive bg-destructive/10 text-red-950 dark:text-destructive",
+  desconhecido: "border-destructive bg-destructive/10 text-red-950 dark:text-destructive",
 } as const;
 
 const hora = (iso: string) => new Date(iso).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
