@@ -12,10 +12,5 @@ export default async function EditarParticipante({ params }: { params: Promise<{
     listarEmpresas(),
   ]);
   if (!data) notFound();
-  return (
-    <section className="grid gap-4">
-      <h1 className="text-2xl font-semibold">Editar participante</h1>
-      <FormularioParticipante participante={data as ParticipanteEditavel} empresas={empresas} />
-    </section>
-  );
+  return <FormularioParticipante titulo="Editar participante" participante={data as ParticipanteEditavel} empresas={empresas} />;
 }

@@ -8,10 +8,5 @@ export default async function EditarEvento({ params }: { params: Promise<{ id: s
   if (!ehUuid(id)) notFound();
   const { data } = await db().from("eventos").select("id, nome, tipo, data").eq("id", id).maybeSingle();
   if (!data) notFound();
-  return (
-    <section className="grid gap-4">
-      <h1 className="text-2xl font-semibold">Editar evento</h1>
-      <FormularioEvento evento={data} />
-    </section>
-  );
+  return <FormularioEvento titulo="Editar evento" evento={data} />;
 }

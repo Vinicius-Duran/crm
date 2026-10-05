@@ -8,10 +8,5 @@ export default async function EditarEmpresa({ params }: { params: Promise<{ id: 
   if (!ehUuid(id)) notFound();
   const { data } = await db().from("empresas").select("id, nome").eq("id", id).maybeSingle();
   if (!data) notFound();
-  return (
-    <section className="grid gap-4">
-      <h1 className="text-2xl font-semibold">Editar empresa</h1>
-      <FormularioEmpresa empresa={data} />
-    </section>
-  );
+  return <FormularioEmpresa titulo="Editar empresa" empresa={data} />;
 }
