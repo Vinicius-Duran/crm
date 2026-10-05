@@ -1,22 +1,36 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
+import gsap from "gsap";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { buscarInscritos, checkinPorCodigo, checkinPorInscricao, type Inscrito, type ResultadoCheckin } from "./actions";
 
+// Verde/âmbar/vermelho distintos, AA nos dois temas (mesmo critério do --sucesso medido na Tarefa 1).
 const COR = {
-  ok: "border-green-600 bg-green-50 text-green-950 dark:bg-green-950 dark:text-green-50",
+  ok: "border-sucesso bg-sucesso/10 text-sucesso",
   repetido: "border-amber-500 bg-amber-50 text-amber-950 dark:bg-amber-950 dark:text-amber-50",
-  outro_evento: "border-red-600 bg-red-50 text-red-950 dark:bg-red-950 dark:text-red-50",
-  desconhecido: "border-red-600 bg-red-50 text-red-950 dark:bg-red-950 dark:text-red-50",
+  outro_evento: "border-destructive bg-destructive/10 text-destructive",
+  desconhecido: "border-destructive bg-destructive/10 text-destructive",
 } as const;
 
 const hora = (iso: string) => new Date(iso).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
 
 function Cartao({ r }: { r: ResultadoCheckin }) {
+  const caixa = useRef<HTMLDivElement>(null);
+  // Cada resultado entra com um "pulo" curto; quem prefere menos movimento vê o cartão direto.
+  useLayoutEffect(() => {
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.from(caixa.current, { scale: 0.96, opacity: 0, duration: 0.22, ease: "power2.out" });
+    });
+    return () => mm.revert();
+  }, [r]);
   return (
-    <div role="status" aria-live="assertive" className={`rounded-xl border-2 p-5 ${COR[r.status]}`}>
+    <div ref={caixa} role="status" aria-live="assertive" className={`rounded-xl border-2 p-5 ${COR[r.status]}`}>
       {r.status === "ok" && (
         <>
           <p className="text-sm font-semibold uppercase tracking-wide">Check-in feito · entregar crachá</p>
@@ -95,24 +109,32 @@ export function Leitor({ eventos, padrao }: { eventos: { id: string; rotulo: str
   }, []);
 
   return (
-    <section className="mx-auto grid max-w-lg gap-4">
-      <h1 className="text-2xl font-semibold">Check-in</h1>
-      <select
-        aria-label="Evento"
-        value={eventoId}
-        onChange={(e) => setEventoId(e.target.value)}
-        className="h-10 rounded-lg border border-input bg-transparent px-2.5"
-      >
-        <option value="">Qualquer evento</option>
-        {eventos.map((e) => (
-          <option key={e.id} value={e.id}>{e.rotulo}</option>
-        ))}
-      </select>
+    <section className="grid gap-4">
+      <h1 className="sr-only">Check-in</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/eventos" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+          <ArrowLeft />
+          Voltar ao painel
+        </Link>
+        <select
+          aria-label="Evento"
+          value={eventoId}
+          onChange={(e) => setEventoId(e.target.value)}
+          className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
+        >
+          <option value="">Qualquer evento</option>
+          {eventos.map((e) => (
+            <option key={e.id} value={e.id}>{e.rotulo}</option>
+          ))}
+        </select>
+      </div>
 
-      <video ref={video} className="aspect-square w-full rounded-xl bg-black object-cover" muted playsInline />
+      <Card>
+        <CardContent>
+          <video ref={video} className="aspect-square w-full rounded-xl bg-black object-cover" muted playsInline />
+        </CardContent>
+      </Card>
       {erroCamera && <p className="text-sm text-destructive">{erroCamera}</p>}
-
-      {resultado && <Cartao r={resultado} />}
 
       {/* Leitor de código de barras USB digita o código e manda Enter: cai aqui também. */}
       <form
@@ -128,42 +150,48 @@ export function Leitor({ eventos, padrao }: { eventos: { id: string; rotulo: str
         <Button type="submit" disabled={pendente}>Validar</Button>
       </form>
 
-      <form
-        className="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const termo = (e.currentTarget.elements.namedItem("termo") as HTMLInputElement).value;
-          iniciar(async () => setInscritos(await buscarInscritos(termo, eventoId || null)));
-        }}
-      >
-        <Input name="termo" placeholder="Sem QR? Busque por nome ou CPF" aria-label="Buscar inscrito" />
-        <Button type="submit" variant="outline" disabled={pendente}>Buscar</Button>
-      </form>
-      <ul className="grid gap-2">
-        {inscritos.map((i) => (
-          <li key={i.inscricaoId} className="flex items-center justify-between gap-3 rounded-lg border p-3">
-            <span>
-              <span className="block font-medium">{i.nome}</span>
-              <span className="block text-xs text-muted-foreground">
-                {i.documento}{i.empresa ? ` · ${i.empresa}` : ""} · {i.evento}{i.checkinEm ? ` · check-in às ${hora(i.checkinEm)}` : ""}
-              </span>
-            </span>
-            <Button
-              type="button"
-              size="sm"
-              disabled={pendente}
-              onClick={() =>
-                iniciar(async () => {
-                  setResultado(await checkinPorInscricao(i.inscricaoId, eventoId || null));
-                  setInscritos([]);
-                })
-              }
-            >
-              Check-in
-            </Button>
-          </li>
-        ))}
-      </ul>
+      {resultado && <Cartao r={resultado} />}
+
+      <Card>
+        <CardContent className="grid gap-3">
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const termo = (e.currentTarget.elements.namedItem("termo") as HTMLInputElement).value;
+              iniciar(async () => setInscritos(await buscarInscritos(termo, eventoId || null)));
+            }}
+          >
+            <Input name="termo" placeholder="Sem QR? Busque por nome ou CPF" aria-label="Buscar inscrito" />
+            <Button type="submit" variant="outline" disabled={pendente}>Buscar</Button>
+          </form>
+          <ul className="grid gap-2">
+            {inscritos.map((i) => (
+              <li key={i.inscricaoId} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                <span>
+                  <span className="block font-medium">{i.nome}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {i.documento}{i.empresa ? ` · ${i.empresa}` : ""} · {i.evento}{i.checkinEm ? ` · check-in às ${hora(i.checkinEm)}` : ""}
+                  </span>
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={pendente}
+                  onClick={() =>
+                    iniciar(async () => {
+                      setResultado(await checkinPorInscricao(i.inscricaoId, eventoId || null));
+                      setInscritos([]);
+                    })
+                  }
+                >
+                  Check-in
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </section>
   );
 }
