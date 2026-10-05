@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BotaoApagar } from "@/components/botao-apagar";
 import { db } from "@/lib/supabase";
+import { emailConfigurado } from "@/lib/email";
 import { ehUuid, formatarData, TIPOS_EVENTO, TIPOS_PARTICIPANTE, type TipoEvento, type TipoParticipante } from "@/lib/dominio";
 import { apagarEvento, removerInscricao } from "../actions";
+import { EnvioEmail, BotaoEmailUm } from "./envio-email";
 
 type Inscricao = {
   id: string;
@@ -33,6 +35,7 @@ export default async function Evento({ params }: { params: Promise<{ id: string 
   if (error) throw new Error(error.message);
   const inscricoes = (data as unknown as Inscricao[]).sort((a, b) => a.participante.nome.localeCompare(b.participante.nome, "pt-BR"));
   const presentes = inscricoes.filter((i) => i.checkin_em).length;
+  const configurado = emailConfigurado();
 
   return (
     <section className="grid gap-5">
@@ -54,6 +57,8 @@ export default async function Evento({ params }: { params: Promise<{ id: string 
         <Link href={`/eventos/${id}/editar`} className={buttonVariants({ variant: "outline" })}>Editar</Link>
         <BotaoApagar acao={apagarEvento.bind(null, id)} confirmacao={`Apagar o evento ${evento.nome} e todas as inscrições?`} rotulo="Apagar evento" />
       </div>
+
+      <EnvioEmail eventoId={id} configurado={configurado} />
 
       <Table>
         <TableHeader>
@@ -82,6 +87,7 @@ export default async function Evento({ params }: { params: Promise<{ id: string 
               <TableCell>
                 <div className="flex justify-end gap-2">
                   <a href={`/inscricoes/${i.id}/pdf`} className={buttonVariants({ variant: "outline", size: "sm" })}>PDF</a>
+                  {configurado && i.participante.email && <BotaoEmailUm inscricaoId={i.id} />}
                   <BotaoApagar acao={removerInscricao.bind(null, i.id, id)} confirmacao={`Remover ${i.participante.nome} deste evento?`} rotulo="Remover" />
                 </div>
               </TableCell>
