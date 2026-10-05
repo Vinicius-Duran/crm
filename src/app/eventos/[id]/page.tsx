@@ -2,10 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BotaoApagar } from "@/components/botao-apagar";
 import { db } from "@/lib/supabase";
 import { emailConfigurado } from "@/lib/email";
+import { iniciais } from "@/lib/texto";
 import { ehUuid, formatarData, TIPOS_EVENTO, TIPOS_PARTICIPANTE, type TipoEvento, type TipoParticipante } from "@/lib/dominio";
 import { apagarEvento, removerInscricao } from "../actions";
 import { EnvioEmail, BotaoEmailUm } from "./envio-email";
@@ -42,64 +45,101 @@ export default async function Evento({ params }: { params: Promise<{ id: string 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{evento.nome}</h1>
-          <p className="text-sm text-muted-foreground">
-            {TIPOS_EVENTO[evento.tipo as TipoEvento]} · {formatarData(evento.data)}
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="secondary">{TIPOS_EVENTO[evento.tipo as TipoEvento]}</Badge>
+            {formatarData(evento.data)}
           </p>
         </div>
-        <p className="text-3xl font-semibold tabular-nums" aria-label="Presentes sobre inscritos">
-          {presentes}/{inscricoes.length}
-        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/eventos/${id}/inscrever`} className={buttonVariants()}>Inscrever participantes</Link>
+          <Link href={`/eventos/${id}/editar`} className={buttonVariants({ variant: "outline" })}>Editar</Link>
+          <a href={`/eventos/${id}/zip`} className={buttonVariants({ variant: "outline" })}>Baixar PDFs (ZIP)</a>
+          <BotaoApagar acao={apagarEvento.bind(null, id)} confirmacao={`Apagar o evento ${evento.nome} e todas as inscrições?`} rotulo="Apagar evento" />
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Link href={`/eventos/${id}/inscrever`} className={buttonVariants()}>Inscrever participantes</Link>
-        <a href={`/eventos/${id}/zip`} className={buttonVariants({ variant: "outline" })}>Baixar PDFs (ZIP)</a>
-        <Link href={`/eventos/${id}/editar`} className={buttonVariants({ variant: "outline" })}>Editar</Link>
-        <BotaoApagar acao={apagarEvento.bind(null, id)} confirmacao={`Apagar o evento ${evento.nome} e todas as inscrições?`} rotulo="Apagar evento" />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card size="sm">
+          <CardContent className="grid gap-1">
+            <p className="text-sm text-muted-foreground">Inscritos</p>
+            <p className="text-2xl font-semibold tabular-nums">{inscricoes.length}</p>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardContent className="grid gap-1">
+            <p className="text-sm text-muted-foreground">Presentes</p>
+            <p className="text-2xl font-semibold tabular-nums" aria-label="Presentes sobre inscritos">
+              {presentes}/{inscricoes.length}
+            </p>
+          </CardContent>
+        </Card>
+        <Card size="sm">
+          <CardContent className="grid gap-1">
+            <p className="text-sm text-muted-foreground">Faltam</p>
+            <p className="text-2xl font-semibold tabular-nums">{inscricoes.length - presentes}</p>
+          </CardContent>
+        </Card>
       </div>
 
       <EnvioEmail eventoId={id} configurado={configurado} />
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Participante</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Código</TableHead>
-            <TableHead>Check-in</TableHead>
-            <TableHead>E-mail</TableHead>
-            <TableHead />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {inscricoes.map((i) => (
-            <TableRow key={i.id}>
-              <TableCell>
-                {i.participante.nome}
-                {i.participante.empresa && <span className="block text-xs text-muted-foreground">{i.participante.empresa.nome}</span>}
-              </TableCell>
-              <TableCell><Badge variant="secondary">{TIPOS_PARTICIPANTE[i.participante.tipo]}</Badge></TableCell>
-              <TableCell className="font-mono text-xs">{i.codigo}</TableCell>
-              <TableCell className="tabular-nums">{i.checkin_em ? hora(i.checkin_em) : "—"}</TableCell>
-              <TableCell className="text-xs">
-                {i.email_enviado_em ? `Enviado ${hora(i.email_enviado_em)}` : i.email_erro ? <span className="text-destructive">{i.email_erro}</span> : i.participante.email ? "Não enviado" : "Sem e-mail"}
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-end gap-2">
-                  <a href={`/inscricoes/${i.id}/pdf`} className={buttonVariants({ variant: "outline", size: "sm" })}>PDF</a>
-                  {configurado && i.participante.email && <BotaoEmailUm inscricaoId={i.id} />}
-                  <BotaoApagar acao={removerInscricao.bind(null, i.id, id)} confirmacao={`Remover ${i.participante.nome} deste evento?`} rotulo="Remover" />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-          {inscricoes.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-muted-foreground">Ninguém inscrito ainda.</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <Card>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Participante</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead>Check-in</TableHead>
+                <TableHead>E-mail</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {inscricoes.map((i) => (
+                <TableRow key={i.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar size="sm">
+                        <AvatarFallback>{iniciais(i.participante.nome)}</AvatarFallback>
+                      </Avatar>
+                      <div className="grid">
+                        <span className="font-medium">{i.participante.nome}</span>
+                        {i.participante.empresa && <span className="text-xs text-muted-foreground">{i.participante.empresa.nome}</span>}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell><Badge variant="secondary">{TIPOS_PARTICIPANTE[i.participante.tipo]}</Badge></TableCell>
+                  <TableCell className="font-mono text-xs">{i.codigo}</TableCell>
+                  <TableCell>
+                    {i.checkin_em ? (
+                      <Badge className="bg-sucesso/10 text-sucesso">{hora(i.checkin_em)}</Badge>
+                    ) : (
+                      <Badge variant="outline">Pendente</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {i.email_enviado_em ? `Enviado ${hora(i.email_enviado_em)}` : i.email_erro ? <span className="text-destructive">{i.email_erro}</span> : i.participante.email ? "Não enviado" : "Sem e-mail"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      <a href={`/inscricoes/${i.id}/pdf`} className={buttonVariants({ variant: "outline", size: "sm" })}>PDF</a>
+                      {configurado && i.participante.email && <BotaoEmailUm inscricaoId={i.id} />}
+                      <BotaoApagar acao={removerInscricao.bind(null, i.id, id)} confirmacao={`Remover ${i.participante.nome} deste evento?`} rotulo="Remover" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {inscricoes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-muted-foreground">Ninguém inscrito ainda.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </section>
   );
 }

@@ -11,14 +11,15 @@ export function EnvioEmail({ eventoId, configurado }: { eventoId: string; config
 
   if (!configurado) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Envio por e-mail desligado. Para ligar, configure <code>RESEND_API_KEY</code> e <code>EMAIL_FROM</code> na Vercel.
+      <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+        Envio por e-mail desligado. Para ligar, configure <code className="font-mono">RESEND_API_KEY</code> e{" "}
+        <code className="font-mono">EMAIL_FROM</code> na Vercel.
       </p>
     );
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2">
       <Button
         type="button"
         variant="outline"
