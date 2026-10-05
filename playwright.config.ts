@@ -7,6 +7,8 @@ if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 export default defineConfig({
   testDir: "e2e",
   timeout: 60_000,
+  // O `next dev` compila cada rota no primeiro acesso; 5 s (o padrão) não cobre a primeira gravação.
+  expect: { timeout: 15_000 },
   workers: 1,
   use: { baseURL: "http://localhost:3000", trace: "retain-on-failure" },
   projects: [
