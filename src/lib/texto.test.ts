@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { gerarCodigo } from "./codigo";
-import { escaparHtml, limparTermo, normalizarBusca } from "./texto";
+import { escaparHtml, iniciais, limparTermo, normalizarBusca } from "./texto";
 
 describe("normalizarBusca", () => {
   it("tira acento, caixa e espaço sobrando", () => {
@@ -25,5 +25,21 @@ describe("gerarCodigo", () => {
     const a = gerarCodigo();
     expect(a).toMatch(/^[A-Za-z0-9_-]{22}$/);
     expect(gerarCodigo()).not.toBe(a);
+  });
+});
+
+describe("iniciais", () => {
+  it("usa o primeiro e o último nome", () => {
+    expect(iniciais("José da Conceição")).toBe("JC");
+    expect(iniciais("  maria   souza ")).toBe("MS");
+  });
+
+  it("nome único dá uma letra, vazio dá ?", () => {
+    expect(iniciais("Ana")).toBe("A");
+    expect(iniciais("   ")).toBe("?");
+  });
+
+  it("mantém o acento da inicial", () => {
+    expect(iniciais("Érica Ávila")).toBe("ÉÁ");
   });
 });

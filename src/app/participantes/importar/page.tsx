@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { db } from "@/lib/supabase";
-import { COLUNAS } from "@/lib/planilha";
 import { Importador } from "./importador";
 
 export default async function Importar() {
@@ -8,11 +6,10 @@ export default async function Importar() {
   if (error) throw new Error(error.message);
   return (
     <section className="grid gap-4">
-      <h1 className="text-2xl font-semibold">Importar planilha</h1>
-      <p className="max-w-prose text-sm text-muted-foreground">
-        Colunas esperadas: <code>{COLUNAS.join(", ")}</code>. Obrigatórias: nome, documento e tipo.{" "}
-        <Link href="/participantes/modelo" className="underline">Baixar o modelo</Link>.
-      </p>
+      <div>
+        <h1 className="text-2xl font-semibold">Importar planilha</h1>
+        <p className="text-sm text-muted-foreground">Cadastre participantes em lote a partir de uma planilha.</p>
+      </div>
       <Importador eventos={eventos} />
     </section>
   );
