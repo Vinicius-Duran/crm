@@ -41,21 +41,15 @@ card, conteúdo em cards e tabelas — **sem mudar o que nenhuma tela faz**.
 
 ### 1. Estrutura de rotas
 
-As telas com casca passam para um **route group** `src/app/(painel)/`, que tem o próprio
-`layout.tsx` com menu lateral e barra superior. **As URLs não mudam** — route group não entra no
-caminho. `src/app/checkin/` fica **fora** do grupo e recebe layout próprio de modo foco.
+**Nenhuma pasta muda de lugar.** O `layout.tsx` raiz envolve tudo num componente cliente `Casca`
+(`src/components/casca.tsx`) que desenha menu lateral e barra superior — e devolve só o conteúdo
+quando o caminho começa com `/checkin` (modo foco).
 
-```
-src/app/layout.tsx              html, fonte, tema, Toaster — sem menu
-src/app/(painel)/layout.tsx     SidebarProvider + menu lateral + barra superior
-src/app/(painel)/eventos/…      (movido, mesmo conteúdo)
-src/app/(painel)/participantes/…
-src/app/(painel)/empresas/…
-src/app/checkin/…               modo foco, sem casca
-```
-
-As rotas de arquivo (`inscricoes/[id]/pdf`, `eventos/[id]/zip`, `participantes/modelo`) não têm
-layout e só mudam de pasta se o movimento do grupo exigir — o caminho público continua o mesmo.
+> **Correção medida (2026-10-05):** a primeira versão desta spec usava um route group
+> `src/app/(painel)/`. Testado numa cópia do repositório, o `next dev` respondeu **404** em
+> `/eventos/[id]/inscrever` e `/eventos/[id]/editar` dentro do grupo (o build de produção respondia
+> 200). O E2E roda em `next dev`, então o grupo quebraria a suíte. A `Casca` condicional evita mover
+> 24 arquivos e não tem esse problema — E2E verde nas duas larguras.
 
 ### 2. Casca
 
@@ -64,7 +58,9 @@ layout e só mudam de pasta se o movimento do grupo exigir — o caminho públic
   planilha, Check-in). Ícones lucide. Item ativo pelo caminho atual. No celular vira gaveta (o
   próprio `Sidebar` faz isso).
 - **Barra superior**: card arredondado com o botão de recolher (`SidebarTrigger`), o breadcrumb da
-  tela (ex.: Eventos › Feira 2026) e o botão de tema claro/escuro à direita.
+  tela, montado pelos segmentos da URL (ex.: Eventos › Detalhe › Inscrever — o id vira "Detalhe";
+  o nome do evento já está no título da página, e buscá-lo de novo seria consulta nova), e o botão
+  de tema claro/escuro à direita. No celular, escolher um item da gaveta fecha a gaveta.
 - **Tema**: classe `dark` no `<html>`, escolhida pelo botão e lembrada no `localStorage`; um script
   curto no `<head>` aplica a classe antes da pintura para não piscar. Sem dependência nova.
 
@@ -72,18 +68,23 @@ layout e só mudam de pasta se o movimento do grupo exigir — o caminho públic
 
 Em `globals.css`, ajustar as variáveis do shadcn, sem criar sistema paralelo:
 
-- fonte: Inter → **Geist** (`next/font/google`), e remover a variável `--font-geist-mono` órfã
-  apontada no review da #4;
+- fonte: Inter → **Geist** (`next/font/google`); a variável `--font-geist-mono`, órfã desde a #4, passa a
+  ser carregada com **Geist Mono** — `font-mono` é usado no código do QR e no CPF, e o E2E localiza o
+  código pela classe `.font-mono`, que precisa continuar;
 - `--radius: 0.625rem`;
 - `--primary` quase preta no claro e quase branca no escuro (o neutro do shadcn já é isso);
-- novo par de acento verde-petróleo (`--chart-1`/badge de sucesso) com contraste AA nos dois temas;
-- `--sidebar*` com o cinza claro do template.
+- novo token `--sucesso` (e `--chart-1`) verde-petróleo: **teal-700** `oklch(0.511 0.096 186.391)` no claro e
+  **teal-400** `oklch(0.777 0.152 181.912)` no escuro. Medido: o teal-600 do template dá 3,74:1 sobre
+  branco (reprova AA); o teal-700 dá 5,47:1 sobre branco e 4,76:1 dentro de badge com fundo a 10%; o
+  teal-400 dá 10,64:1 sobre o fundo escuro;
+- `--sidebar*`: o cinza claro já existe; no escuro, `--sidebar-primary` deixa o azul do padrão shadcn e
+  vira neutro, para não destoar do resto.
 
 ### 4. Telas (14 `page.tsx`, todas repaginadas, nenhuma com lógica nova)
 
 | Tela | Como fica |
 |---|---|
-| Listas (eventos, participantes, empresas) | Título + botão "Novo" no topo; card com busca/filtros e a tabela; participante com avatar de iniciais e e-mail embaixo do nome; ações por linha num menu "⋮" (editar, PDF, apagar). |
+| Listas (eventos, participantes, empresas) | Título + botão "Novo" no topo; card com busca/filtros e a tabela; participante com avatar de iniciais e e-mail embaixo do nome; **ações por linha visíveis**, como botões pequenos (editar, PDF, apagar) — sem menu "⋮", porque o E2E clica "Apagar" e "PDF" direto na linha. |
 | Formulários (novo/editar de cada entidade, inscrever) | Card com título e grade de campos em duas colunas no desktop, uma no celular; botões no rodapé do card. |
 | Detalhe do evento | Três cards pequenos no topo — inscritos, presentes, faltam — com números que a página **já calcula** (`presentes` em `eventos/[id]/page.tsx`); depois a tabela de inscrições com badges de check-in e de e-mail. |
 | Importar planilha | Card de envio do arquivo; prévia com os três números (novos, já cadastrados, com erro) em badges e a lista de erros por linha. |
@@ -107,13 +108,17 @@ Quem esconde para revelar é o JS (`gsap.from`), nunca o CSS.
 
 ### 6. Componentes
 
-Do registro shadcn, instalados pela CLI: `sidebar` (com `separator`, `sheet`, `tooltip`, `skeleton`
-e o que mais a CLI trouxer como dependência dele), `dropdown-menu`, `avatar`, `breadcrumb`. Reaproveitar `Campo`,
+Do registro shadcn, instalados pela CLI (`npx shadcn@latest add sidebar breadcrumb avatar`): a CLI
+traz `sidebar`, `separator`, `sheet`, `tooltip`, `skeleton`, `breadcrumb`, `avatar` e o hook
+`src/hooks/use-mobile.ts` — **que reprova no eslint do projeto** (`react-hooks/set-state-in-effect`) e
+precisa ser reescrito com `useSyncExternalStore`. O `package.json` não muda. Para o movimento,
+`gsap` entra como dependência. Reaproveitar `Campo`,
 `Selecao` e `BotaoApagar` existentes, repaginados — não duplicar.
 
 ## Verificação
 
-- `tsc`, `eslint`, Vitest (39 testes, contagem não muda) e `npm run build` limpos.
+- `tsc`, `eslint`, Vitest e `npm run build` limpos. Vitest sai de **42** (39 da fatia #12 + 3 do
+  Basic Auth) para **50**: +5 de navegação (item ativo e breadcrumb) e +3 de iniciais do avatar.
 - **E2E verde** (`npm run e2e`, desktop e celular) — é a prova de que nenhuma tela perdeu função.
 - Playwright MCP em **1440 e 390**, **claro e escuro**, em todas as 14 telas, com console sem erro.
 - As cinco skills de front do autor (taste-skill, refero, emil-design-eng, impeccable, 21st.dev);
@@ -124,7 +129,7 @@ e o que mais a CLI trouxer como dependência dele), `dropdown-menu`, `avatar`, `
 
 | Risco | Mitigação |
 |---|---|
-| Mover pastas para `(painel)` quebrar import relativo ou rota | `tsc` + `build` + E2E; mover com `git mv` para preservar histórico. |
+| `next dev` compilar a rota na primeira visita e o E2E estourar os 5 s padrão do `expect` | Medido: com o `.next` frio, a primeira gravação de evento passou de 5 s. `expect.timeout` sobe para 15 s no `playwright.config.ts`. |
 | Rótulo mudar e o E2E falhar | Manter os textos; quando mudar, ajustar o teste no mesmo commit. |
 | Tema escuro piscar no carregamento | Script de tema no `<head>`, antes da pintura. |
-| Menu "⋮" esconder ação que o E2E clica | O E2E abre o menu antes de clicar, ou a ação fica também visível — decidir no plano, tela a tela. |
+| Ação escondida em menu quebrar o E2E | Decidido: ações ficam visíveis na linha. |
