@@ -1,6 +1,6 @@
 # CRM de eventos — design
 
-Data: 2026-10-05 · Status: aprovado em conversa, aguardando revisão da spec escrita
+Data: 2026-10-05 · Status: aprovada pelo autor · Plano: `docs/superpowers/plans/2026-10-05-crm-eventos.md`
 
 ## Objetivo
 
@@ -40,8 +40,10 @@ crachá pelo sistema · página pública para o participante.
   estrangeira).
 - **Código do QR:** `crypto.randomBytes(16).toString('base64url')` — 128 bits,
   22 caracteres. O QR contém **só** o código, sem URL.
-- **Busca:** extensão `unaccent`; nome comparado sem acento e sem caixa,
-  documento comparado só por dígitos.
+- **Busca:** nome comparado sem acento e sem caixa, documento comparado só por
+  dígitos. *Ajuste do plano:* em vez da extensão `unaccent`, a coluna
+  `participantes.nome_busca` é preenchida pelo app com a mesma normalização. O
+  resultado é igual, e a regra fica testável no Vitest.
 - **RLS ligado sem políticas** nas quatro tabelas: o acesso público pela API do
   Supabase fica bloqueado; só o servidor, com a chave `service_role`, acessa.
 
@@ -129,7 +131,16 @@ screenshot do Playwright.
 1. Criar o projeto no Supabase. O agente então fixa o `project_ref` no
    `.mcp.json`, e o autor autentica o MCP com `/mcp` → supabase → Authenticate.
 2. Criar o projeto na Vercel ligado ao repositório e preencher as variáveis.
-3. Ligar a proteção em *Vercel → Settings → Deployment Protection*. Proteger o
-   domínio de produção com senha é recurso pago (plano Pro); no Hobby a proteção
-   cobre só os previews. Conferir no painel antes de contar com isso.
+3. Ligar a proteção em *Vercel → Settings → Deployment Protection*.
+   **Corrigido em 2026-10-05**, depois de conferir a documentação da Vercel
+   (atualizada em set/2026). A versão anterior desta spec dizia que o Hobby só
+   protegia os previews, e isso estava errado:
+   - **Vercel Authentication com "All Deployments"** protege também o domínio de
+     produção, **em qualquer plano**, inclusive o Hobby. Entra quem estiver logado
+     numa conta Vercel com acesso ao projeto.
+   - **Password Protection**, a senha única, é do plano Pro, a US$ 20/mês por
+     projeto.
+   - **"Standard Protection"** não protege o domínio de produção.
+
+   Qual das duas usar é decisão do autor, e está em aberto.
 4. Para e-mail automático: conta no Resend e domínio verificado.
