@@ -25,20 +25,19 @@ Supabase não lê nada; só o servidor Next.js, com a chave secreta, acessa.
 ## Deploy na Vercel
 
 1. Importe o repositório na Vercel (framework Next.js, sem ajuste de build).
-2. Em *Settings → Environment Variables*, cadastre as variáveis do `.env.example`.
-3. Em *Settings → Deployment Protection*, ligue a proteção. Sem ela o sistema fica aberto na internet.
-   - **Vercel Authentication + "All Deployments"**: protege inclusive o domínio de produção, em qualquer
-     plano. Entra quem estiver logado numa conta Vercel com acesso ao projeto.
-   - **Password Protection**: uma senha única para todos. Recurso do plano Pro (US$ 20/mês por projeto,
-     conforme a documentação da Vercel em set/2026).
-   - "Standard Protection" **não** protege o domínio de produção.
+2. Em *Settings → Environment Variables*, cadastre as variáveis do `.env.example`, inclusive
+   `ADMIN_USER` e `ADMIN_PASSWORD`: é o usuário e a senha que o navegador pede ao abrir qualquer página
+   (HTTP Basic Auth, em `src/proxy.ts`). Sem as duas, a produção responde 503 em vez de ficar aberta.
+   Em `npm run dev` sem elas, o sistema abre sem senha.
+3. Em *Settings → Deployment Protection*, desligue a Vercel Authentication, senão o navegador pede
+   dois logins (o da Vercel e o do sistema).
 4. E-mail automático (opcional): crie a conta no Resend, verifique o domínio e preencha
    `RESEND_API_KEY` e `EMAIL_FROM`. O plano grátis envia 100 e-mails por dia; o sistema manda em lotes
    e o que passar da cota fica pendente para o dia seguinte.
 
 ## No dia do evento
 
-Abra `/checkin` no celular (HTTPS é obrigatório para a câmera; a Vercel já serve em HTTPS) e aceite
+Abra `/checkin` no celular, entre com `ADMIN_USER` e `ADMIN_PASSWORD` (HTTPS é obrigatório para a câmera; a Vercel já serve em HTTPS) e aceite
 a permissão da câmera. O evento do dia vem selecionado. Quem chegar sem QR legível é achado pela busca
 por nome ou CPF na mesma tela. Leitor de código de barras USB também funciona: ele digita no campo de
 código e manda Enter.
