@@ -72,10 +72,31 @@ export async function gerarCredencialPdf(d: DadosCredencial): Promise<Uint8Array
   centro(t.evento, negrito, 22, height - 100);
   centro(t.subtitulo, regular, 12, height - 122, cinza);
 
-  const png = await QRCode.toBuffer(d.codigo, { errorCorrectionLevel: "M", margin: 1, width: 600 });
-  const qr = await pdf.embedPng(png);
+  // QR em vetor, direto da matriz: gerar e embutir um PNG custava ~120 ms por credencial (o ZIP de
+  // um evento de 10.000 levaria ~20 min). Cada trecho de módulos escuros de uma linha vira um retângulo.
+  const { modules } = QRCode.create(d.codigo, { errorCorrectionLevel: "M" });
   const lado = 280;
-  pagina.drawImage(qr, { x: (width - lado) / 2, y: height - 150 - lado, width: lado, height: lado });
+  const modulo = lado / (modules.size + 2); // 1 módulo de margem em volta, como antes
+  const x0 = (width - lado) / 2 + modulo;
+  const topo = height - 150 - modulo;
+  for (let linha = 0; linha < modules.size; linha++) {
+    for (let coluna = 0; coluna < modules.size; ) {
+      if (!modules.get(linha, coluna)) {
+        coluna++;
+        continue;
+      }
+      const inicio = coluna;
+      while (coluna < modules.size && modules.get(linha, coluna)) coluna++;
+      pagina.drawRectangle({
+        x: x0 + inicio * modulo,
+        y: topo - (linha + 1) * modulo,
+        width: (coluna - inicio) * modulo,
+        // Um fio a mais de altura: sem isso alguns leitores de PDF mostram uma linha clara entre as fileiras.
+        height: modulo + 0.05,
+        color: rgb(0, 0, 0),
+      });
+    }
+  }
   // Impresso embaixo do QR: se a câmera falhar, a equipe digita no check-in.
   centro(t.codigo, mono, 12, height - 450, cinza);
 
