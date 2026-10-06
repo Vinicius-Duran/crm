@@ -56,6 +56,11 @@ describe("montarZip", () => {
     expect(Object.keys(zip).sort()).toEqual(["etc.pdf", "joao-silva-2.pdf", "joao-silva.pdf"]);
   });
 
+  it("nome que já termina em número não sobrescreve o homônimo numerado", () => {
+    const zip = unzipSync(montarZip([1, 2, 3].map((n, i) => ({ nome: ["João", "João", "João 2"][i], conteudo: new Uint8Array([n]) }))));
+    expect(Object.keys(zip).sort()).toEqual(["joao-2-2.pdf", "joao-2.pdf", "joao.pdf"]);
+  });
+
   it("nome só com símbolo vira participante", () => {
     expect(nomeArquivo("李")).toBe("participante");
   });

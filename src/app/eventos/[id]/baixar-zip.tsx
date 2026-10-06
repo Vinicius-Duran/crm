@@ -11,18 +11,26 @@ const numero = (n: number) => n.toLocaleString("pt-BR");
 // progresso e entrega um arquivo único. ponytail: o ZIP inteiro fica na memória do navegador
 // (~3 KB por credencial, ~30 MB para 10.000); se passar de centenas de milhares, gravar em streaming.
 export function BaixarZip({ eventoId, nome, total }: { eventoId: string; nome: string; total: number }) {
-  const [feitos, setFeitos] = useState<number | null>(null);
+  const [progresso, setProgresso] = useState<{ feitos: number; total: number } | null>(null);
 
   const baixar = async () => {
-    setFeitos(0);
+    setProgresso({ feitos: 0, total });
     try {
       const partes: Uint8Array[] = [];
-      for (let lote = 0; lote * LOTE_ZIP < total; lote++) {
+      // O total vem de cada lote (X-Total), não da página, que pode estar aberta há horas.
+      let atual: number | null = null;
+      let mudou = false;
+      let feitos = 0;
+      for (let lote = 0; atual === null || lote * LOTE_ZIP < atual; lote++) {
         const r = await fetch(`/eventos/${eventoId}/zip?lote=${lote}`);
-        if (r.status === 404) break; // alguém removeu participantes durante o download
+        const doLote = Number(r.headers.get("X-Total"));
+        if (atual !== null && doLote !== atual) mudou = true;
+        atual ??= doLote;
+        if (r.status === 404) break;
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         partes.push(new Uint8Array(await r.arrayBuffer()));
-        setFeitos(Math.min((lote + 1) * LOTE_ZIP, total));
+        feitos = Math.min((lote + 1) * LOTE_ZIP, atual);
+        setProgresso({ feitos, total: atual });
       }
       if (partes.length === 0) return void toast.error("Nenhum participante neste evento.");
       const url = URL.createObjectURL(new Blob([juntarZips(partes) as BlobPart], { type: "application/zip" }));
@@ -31,16 +39,24 @@ export function BaixarZip({ eventoId, nome, total }: { eventoId: string; nome: s
       a.download = `${nomeArquivo(nome)}.zip`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      // Lotes por posição: participante incluído ou removido no meio desloca os seguintes.
+      if (mudou || feitos < (atual ?? 0)) toast.warning("A lista de participantes mudou durante o download. Baixe de novo para ter o ZIP completo.");
     } catch {
       toast.error("Não consegui gerar o ZIP. Tente de novo.");
     } finally {
-      setFeitos(null);
+      setProgresso(null);
     }
   };
 
+  const texto = progresso ? `Gerando PDFs… ${numero(progresso.feitos)} de ${numero(progresso.total)}` : "Baixar PDFs (ZIP)";
   return (
-    <Button type="button" variant="outline" disabled={total === 0 || feitos !== null} onClick={baixar} aria-live="polite">
-      {feitos === null ? "Baixar PDFs (ZIP)" : `Gerando PDFs… ${numero(feitos)} de ${numero(total)}`}
-    </Button>
+    <>
+      <Button type="button" variant="outline" disabled={total === 0 || progresso !== null} onClick={baixar}>
+        {texto}
+      </Button>
+      <span role="status" className="sr-only">
+        {progresso ? texto : ""}
+      </span>
+    </>
   );
 }
