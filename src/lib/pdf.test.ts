@@ -1,10 +1,40 @@
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
 import { unzipSync } from "fflate";
-import { gerarCredencialPdf } from "./pdf";
+import { gerarCredencialPdf, textosCredencial } from "./pdf";
 import { montarZip, nomeArquivo } from "./zip";
 
-const dados = { nome: "José Conceição", tipo: "VIP", empresa: "Acme", evento: "Kickoff 2027", data: "15/01/2027", codigo: "AbCdEfGhIjKlMnOpQrStUv" };
+const dados = {
+  nome: "José Conceição",
+  tipo: "VIP",
+  empresa: "Fornecedora Beta",
+  empresaCliente: "Acme Ltda",
+  evento: "Kickoff 2027",
+  tipoEvento: "Premiação e incentivo",
+  data: "15/01/2027",
+  codigo: "AbCdEfGhIjKlMnOpQrStUv",
+};
+
+describe("textosCredencial", () => {
+  it("monta cabeçalho, código impresso e rodapé com as duas marcas", () => {
+    expect(textosCredencial(dados)).toEqual({
+      empresaCliente: "ACME LTDA",
+      evento: "Kickoff 2027",
+      subtitulo: "Premiação e incentivo · 15/01/2027",
+      codigo: "AbCdEfGhIjKlMnOpQrStUv",
+      nome: "José Conceição",
+      tipo: "VIP",
+      empresa: "Fornecedora Beta",
+      aviso: "Credencial pessoal e intransferível.",
+      instrucao: "Apresente este QR code na entrada do evento.",
+      rodape: "© 2027 Acme Ltda · Organização VM Events. Todos os direitos reservados.",
+    });
+  });
+
+  it("o ano do rodapé é o do evento, não o de hoje", () => {
+    expect(textosCredencial({ ...dados, data: "03/12/2026" }).rodape).toMatch(/^© 2026 /);
+  });
+});
 
 describe("gerarCredencialPdf", () => {
   it("gera um PDF de uma página A4", async () => {
@@ -13,8 +43,8 @@ describe("gerarCredencialPdf", () => {
     expect(Math.round(doc.getPage(0).getWidth())).toBe(595);
   });
 
-  it("não quebra com letra fora do WinAnsi, nome enorme e sem empresa", async () => {
-    const bytes = await gerarCredencialPdf({ ...dados, nome: "Łukasz Żółć 李 " + "Muito ".repeat(30), empresa: null });
+  it("não quebra com letra fora do WinAnsi, nome e empresa cliente enormes e sem empresa", async () => {
+    const bytes = await gerarCredencialPdf({ ...dados, nome: "Łukasz Żółć 李 " + "Muito ".repeat(30), empresa: null, empresaCliente: "Grupo " + "Enorme ".repeat(40) });
     expect(bytes.length).toBeGreaterThan(1000);
   });
 });
