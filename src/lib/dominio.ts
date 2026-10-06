@@ -75,6 +75,7 @@ export const eventoSchema = z.object({
   nome: z.string().trim().min(1, "Nome obrigatório"),
   tipo: z.enum(Object.keys(TIPOS_EVENTO) as [TipoEvento, ...TipoEvento[]], { message: "Tipo inválido" }),
   data: z.string().refine(dataIsoValida, "Data inválida"),
+  empresa_id: z.uuid({ message: "Escolha a empresa" }),
 });
 export type EventoInput = z.output<typeof eventoSchema>;
 

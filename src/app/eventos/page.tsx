@@ -7,9 +7,9 @@ import { db } from "@/lib/supabase";
 import { formatarData, TIPOS_EVENTO, type TipoEvento } from "@/lib/dominio";
 
 export default async function Eventos() {
-  const { data, error } = await db().from("eventos").select("id, nome, tipo, data, inscricoes(count)").order("data", { ascending: false });
+  const { data, error } = await db().from("eventos").select("id, nome, tipo, data, empresa:empresas(nome), inscricoes(count)").order("data", { ascending: false });
   if (error) throw new Error(error.message);
-  const eventos = data as unknown as { id: string; nome: string; tipo: TipoEvento; data: string; inscricoes: { count: number }[] }[];
+  const eventos = data as unknown as { id: string; nome: string; tipo: TipoEvento; data: string; empresa: { nome: string }; inscricoes: { count: number }[] }[];
 
   return (
     <section className="grid gap-4">
@@ -27,6 +27,7 @@ export default async function Eventos() {
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Nome</TableHead>
+                <TableHead>Empresa</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead className="text-right">Inscritos</TableHead>
               </TableRow>
@@ -38,13 +39,14 @@ export default async function Eventos() {
                   <TableCell>
                     <Link href={`/eventos/${e.id}`} className="hover:underline">{e.nome}</Link>
                   </TableCell>
+                  <TableCell>{e.empresa.nome}</TableCell>
                   <TableCell><Badge variant="secondary">{TIPOS_EVENTO[e.tipo]}</Badge></TableCell>
                   <TableCell className="text-right tabular-nums">{e.inscricoes[0]?.count ?? 0}</TableCell>
                 </TableRow>
               ))}
               {eventos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground">Nenhum evento cadastrado.</TableCell>
+                  <TableCell colSpan={5} className="text-muted-foreground">Nenhum evento cadastrado.</TableCell>
                 </TableRow>
               )}
             </TableBody>

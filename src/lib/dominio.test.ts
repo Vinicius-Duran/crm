@@ -69,8 +69,16 @@ describe("ehUuid", () => {
 });
 
 describe("eventoSchema", () => {
+  const empresa_id = "3f2b8c1e-9d4a-4f6b-8e2c-1a2b3c4d5e6f";
+
   it("exige data real", () => {
-    expect(eventoSchema.safeParse({ nome: "Kickoff 2027", tipo: "kickoff", data: "2027-01-15" }).success).toBe(true);
-    expect(eventoSchema.safeParse({ nome: "Kickoff 2027", tipo: "kickoff", data: "" }).success).toBe(false);
+    expect(eventoSchema.safeParse({ nome: "Kickoff 2027", tipo: "kickoff", data: "2027-01-15", empresa_id }).success).toBe(true);
+    expect(eventoSchema.safeParse({ nome: "Kickoff 2027", tipo: "kickoff", data: "", empresa_id }).success).toBe(false);
+  });
+
+  it("exige a empresa", () => {
+    const r = eventoSchema.safeParse({ nome: "Kickoff 2027", tipo: "kickoff", data: "2027-01-15", empresa_id: "" });
+    expect(r.success).toBe(false);
+    expect(r.error!.issues.map((i) => i.message)).toEqual(["Escolha a empresa"]);
   });
 });
