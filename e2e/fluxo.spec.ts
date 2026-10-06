@@ -19,8 +19,15 @@ function gerarCpf(): string {
 
 test.describe.configure({ mode: "serial" });
 
+const db = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+
+// O código do QR não aparece mais na tela do evento (a coluna é o documento); vem do banco.
+async function codigoDe(eventoId: string, cpf: string): Promise<string> {
+  const { data } = await db.from("participantes").select("codigo").eq("evento_id", eventoId).eq("documento", cpf).single();
+  return data!.codigo as string;
+}
+
 test.afterAll(async () => {
-  const db = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
   // Apagar o evento apaga os participantes dele (on delete cascade).
   await db.from("eventos").delete().like("nome", `${PREFIXO}%`);
   await db.from("empresas").delete().like("nome", `${PREFIXO}%`);
@@ -97,8 +104,11 @@ test("empresa, evento, participantes, importação, PDF, check-in e CSV", async 
   await expect(page.getByLabel("Presentes sobre participantes")).toHaveText("0/2");
 
   const linha = page.getByRole("row", { name: new RegExp(`${tag} José Conceição`) });
-  const codigo = (await linha.locator(".font-mono").innerText()).trim();
+  // A tabela mostra o documento formatado, não o código do QR.
+  await expect(linha.getByText(`${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`)).toBeVisible();
+  const codigo = await codigoDe(eventoId, cpf);
   expect(codigo).toMatch(/^[A-Za-z0-9_-]{22}$/);
+  await expect(linha.getByText(codigo)).toHaveCount(0);
 
   // PDF individual e ZIP
   const pdfHref = await linha.getByRole("link", { name: "PDF" }).getAttribute("href");
@@ -140,7 +150,7 @@ test("empresa, evento, participantes, importação, PDF, check-in e CSV", async 
   await page.getByRole("button", { name: "Gravar 1 participantes" }).click();
   await expect(page).toHaveURL(new RegExp(`/eventos/${eventoId}$`));
   await expect(page.getByLabel("Presentes sobre participantes")).toHaveText("1/2");
-  await expect(linha.locator(".font-mono")).toHaveText(codigo);
+  expect(await codigoDe(eventoId, cpf)).toBe(codigo);
   await expect(linha.getByText("Fornecedora Nova")).toBeVisible();
 
   // CSV do evento: quem veio tem Sim e a hora de chegada; quem não veio, Não

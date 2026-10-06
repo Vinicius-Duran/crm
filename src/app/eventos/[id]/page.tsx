@@ -10,6 +10,7 @@ import { db } from "@/lib/supabase";
 import { emailConfigurado } from "@/lib/email";
 import { iniciais } from "@/lib/texto";
 import { paginar } from "@/lib/paginacao";
+import { formatarDocumento } from "@/lib/documento";
 import { ehUuid, formatarData, TIPOS_EVENTO, TIPOS_PARTICIPANTE, type TipoEvento, type TipoParticipante } from "@/lib/dominio";
 import { apagarEvento } from "../actions";
 import { apagarParticipante } from "./participantes/actions";
@@ -22,7 +23,7 @@ type Participante = {
   email: string | null;
   empresa: string | null;
   tipo: TipoParticipante;
-  codigo: string;
+  documento: string;
   checkin_em: string | null;
   email_enviado_em: string | null;
   email_erro: string | null;
@@ -49,7 +50,7 @@ export default async function Evento({ params, searchParams }: { params: Promise
   const pag = paginar(paginaPedida, total ?? 0, POR_PAGINA);
   const { data, error } = await db()
     .from("participantes")
-    .select("id, nome, email, empresa, tipo, codigo, checkin_em, email_enviado_em, email_erro")
+    .select("id, nome, email, empresa, tipo, documento, checkin_em, email_enviado_em, email_erro")
     .eq("evento_id", id)
     .order("nome_busca")
     .order("id")
@@ -115,7 +116,7 @@ export default async function Evento({ params, searchParams }: { params: Promise
               <TableRow>
                 <TableHead>Participante</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>Código</TableHead>
+                <TableHead>Documento</TableHead>
                 <TableHead>Check-in</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead />
@@ -136,7 +137,7 @@ export default async function Evento({ params, searchParams }: { params: Promise
                     </div>
                   </TableCell>
                   <TableCell><Badge variant="secondary">{TIPOS_PARTICIPANTE[p.tipo]}</Badge></TableCell>
-                  <TableCell className="font-mono text-xs">{p.codigo}</TableCell>
+                  <TableCell className="tabular-nums whitespace-nowrap">{formatarDocumento(p.documento)}</TableCell>
                   <TableCell>
                     {p.checkin_em ? (
                       <Badge className="bg-sucesso/10 text-sucesso">{hora(p.checkin_em)}</Badge>

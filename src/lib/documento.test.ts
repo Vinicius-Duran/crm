@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cpfValido, normalizarDocumento, validarDocumento } from "./documento";
+import { cpfValido, formatarDocumento, normalizarDocumento, validarDocumento } from "./documento";
 
 describe("normalizarDocumento", () => {
   it("tira pontuação e põe em caixa alta", () => {
@@ -31,5 +31,13 @@ describe("validarDocumento", () => {
   });
   it("vazio é obrigatório", () => {
     expect(validarDocumento(" .- ")).toEqual({ ok: false, erro: "Documento obrigatório" });
+  });
+});
+
+describe("formatarDocumento", () => {
+  it("CPF ganha pontos e traço; o resto (passaporte) sai como está", () => {
+    expect(formatarDocumento("52998224725")).toBe("529.982.247-25");
+    expect(formatarDocumento("AB123456")).toBe("AB123456");
+    expect(formatarDocumento("123456789012")).toBe("123456789012");
   });
 });
