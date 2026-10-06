@@ -136,4 +136,9 @@
   html {
     @apply font-sans;
   }
+  /* O Chrome no Windows desenha a lista do <select> com o fundo da própria <option>, ignorando o
+     color-scheme; sem cor explícita ela sai branca com o texto claro do tema escuro. */
+  option {
+    @apply bg-popover text-popover-foreground;
+  }
 }
