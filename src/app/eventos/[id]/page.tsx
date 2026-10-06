@@ -59,6 +59,7 @@ export default async function Evento({ params }: { params: Promise<{ id: string 
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/eventos/${id}/participantes/novo`} className={buttonVariants()}>Adicionar participante</Link>
+          <Link href={`/eventos/${id}/importar`} className={buttonVariants({ variant: "outline" })}>Importar planilha</Link>
           <a href={`/eventos/${id}/csv`} className={buttonVariants({ variant: "outline" })}>Exportar CSV</a>
           <a href={`/eventos/${id}/zip`} className={buttonVariants({ variant: "outline" })}>Baixar PDFs (ZIP)</a>
           <Link href={`/eventos/${id}/editar`} className={buttonVariants({ variant: "outline" })}>Editar</Link>
