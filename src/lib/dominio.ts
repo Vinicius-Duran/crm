@@ -67,6 +67,8 @@ export const participanteSchema = z.object({
   data_nascimento: textoOpcional.refine((v) => v === null || dataIsoValida(v), "Data de nascimento inválida"),
   email: textoOpcional.refine((v) => v === null || z.email().safeParse(v).success, "E-mail inválido"),
   telefone: textoOpcional,
+  // Onde a pessoa trabalha (texto livre), não a empresa cliente dona do evento.
+  empresa: textoOpcional.transform((v) => v && v.replace(/\s+/g, " ")),
   tipo: z.enum(Object.keys(TIPOS_PARTICIPANTE) as [TipoParticipante, ...TipoParticipante[]], { message: "Tipo inválido" }),
 });
 export type ParticipanteInput = z.output<typeof participanteSchema>;
@@ -75,6 +77,7 @@ export const eventoSchema = z.object({
   nome: z.string().trim().min(1, "Nome obrigatório"),
   tipo: z.enum(Object.keys(TIPOS_EVENTO) as [TipoEvento, ...TipoEvento[]], { message: "Tipo inválido" }),
   data: z.string().refine(dataIsoValida, "Data inválida"),
+  empresa_id: z.uuid({ message: "Escolha a empresa" }),
 });
 export type EventoInput = z.output<typeof eventoSchema>;
 

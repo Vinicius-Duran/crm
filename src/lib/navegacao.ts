@@ -2,25 +2,22 @@
 export const GRUPOS = [
   {
     titulo: "Gestão",
+    // Na ordem do trabalho: a empresa vem antes do evento.
     itens: [
-      { href: "/eventos", texto: "Eventos" },
-      { href: "/participantes", texto: "Participantes" },
       { href: "/empresas", texto: "Empresas" },
+      { href: "/eventos", texto: "Eventos" },
     ],
   },
   {
     titulo: "Operação",
-    itens: [
-      { href: "/participantes/importar", texto: "Importar planilha" },
-      { href: "/checkin", texto: "Check-in" },
-    ],
+    itens: [{ href: "/checkin", texto: "Check-in" }],
   },
 ] as const;
 
 const TODOS: string[] = GRUPOS.flatMap((g) => g.itens.map((i) => i.href));
 
 // Ativo é o item cujo caminho é o prefixo mais longo da rota atual:
-// em /participantes/importar acende "Importar planilha", e não "Participantes".
+// em /eventosx não acende "Eventos", e em /eventos/<id>/participantes/novo acende.
 export function itemAtivo(caminho: string): string | undefined {
   return TODOS.filter((h) => caminho === h || caminho.startsWith(`${h}/`)).sort((a, b) => b.length - a.length)[0];
 }
@@ -32,7 +29,6 @@ const NOMES: Record<string, string> = {
   importar: "Importar planilha",
   novo: "Novo",
   editar: "Editar",
-  inscrever: "Inscrever",
 };
 
 // Cada segmento da URL vira um passo do breadcrumb; segmento desconhecido (o id) vira "Detalhe".

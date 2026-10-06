@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { buscarInscritos, checkinPorCodigo, checkinPorInscricao, type Inscrito, type ResultadoCheckin } from "./actions";
+import { buscarInscritos, checkinPorCodigo, checkinPorParticipante, type Inscrito, type ResultadoCheckin } from "./actions";
 
 // Verde/âmbar/vermelho distintos; contraste texto/fundo medido ≥ 4,5:1 nos dois temas
 // (tabela completa, par a par, no IMPLEMENTACAO.md da issue #21).
@@ -168,7 +168,7 @@ export function Leitor({ eventos, padrao }: { eventos: { id: string; rotulo: str
           </form>
           <ul className="grid gap-2">
             {inscritos.map((i) => (
-              <li key={i.inscricaoId} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+              <li key={i.participanteId} className="flex items-center justify-between gap-3 rounded-lg border p-3">
                 <span>
                   <span className="block font-medium">{i.nome}</span>
                   <span className="block text-xs text-muted-foreground">
@@ -181,7 +181,7 @@ export function Leitor({ eventos, padrao }: { eventos: { id: string; rotulo: str
                   disabled={pendente}
                   onClick={() =>
                     iniciar(async () => {
-                      setResultado(await checkinPorInscricao(i.inscricaoId, eventoId || null));
+                      setResultado(await checkinPorParticipante(i.participanteId, eventoId || null));
                       setInscritos([]);
                     })
                   }

@@ -23,7 +23,7 @@ const APELIDOS: Record<string, Coluna> = {
 };
 
 export type LinhaBruta = { linha: number } & Record<Coluna, string>;
-export type DadosImportacao = ParticipanteInput & { empresa: string | null };
+export type DadosImportacao = ParticipanteInput;
 export type LinhaValidada =
   | { linha: number; ok: true; dados: DadosImportacao }
   | { linha: number; ok: false; erros: string[] };
@@ -55,8 +55,10 @@ function ehBinario(b: Uint8Array): boolean {
 }
 
 // SheetJS lê CSV sem BOM como Latin-1 e estraga UTF-8. Tenta UTF-8 estrito; se não for, é o
-// Windows-1252 que o Excel brasileiro grava.
+// Windows-1252 que o Excel brasileiro grava. BOM de UTF-16 é o "Texto Unicode" do Excel.
 function decodificarTexto(b: Uint8Array): string {
+  if (b[0] === 0xff && b[1] === 0xfe) return new TextDecoder("utf-16le").decode(b);
+  if (b[0] === 0xfe && b[1] === 0xff) return new TextDecoder("utf-16be").decode(b);
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(b);
   } catch {
@@ -94,7 +96,7 @@ export function validarLinhas(linhas: LinhaBruta[]): LinhaValidada[] {
     const anterior = vistos.get(r.data.documento);
     if (anterior) return { linha: l.linha, ok: false, erros: [`Documento repetido na linha ${anterior}`] };
     vistos.set(r.data.documento, l.linha);
-    return { linha: l.linha, ok: true, dados: { ...r.data, empresa: l.empresa.replace(/\s+/g, " ").trim() || null } };
+    return { linha: l.linha, ok: true, dados: r.data };
   });
 }
 

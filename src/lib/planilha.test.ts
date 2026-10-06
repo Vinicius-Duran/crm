@@ -56,6 +56,17 @@ describe("lerPlanilha", () => {
     expect(l.nome).toBe("José Conceição");
   });
 
+  it("lê o \"Texto Unicode\" do Excel (UTF-16 com BOM, separado por tab)", () => {
+    const texto = "nome\tdocumento\ttipo\r\nJosé Conceição\t529.982.247-25\tVIP\r\n";
+    const le = new Uint8Array([0xff, 0xfe, ...Buffer.from(texto, "utf16le")]);
+    const be = new Uint8Array([0xfe, 0xff, ...Buffer.from(texto, "utf16le").swap16()]);
+    for (const bytes of [le, be]) {
+      expect(lerPlanilha(bytes)).toEqual([
+        { linha: 2, nome: "José Conceição", documento: "529.982.247-25", data_nascimento: "", email: "", telefone: "", empresa: "", tipo: "VIP" },
+      ]);
+    }
+  });
+
   it("ignora linha totalmente vazia e numera pela linha da planilha", () => {
     const linhas = lerPlanilha(xlsx([["nome", "documento"], ["Ana", "1"], ["", ""], ["Bia", "2"]]));
     expect(linhas.map((l) => l.linha)).toEqual([2, 4]);

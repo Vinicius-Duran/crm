@@ -10,19 +10,19 @@ import { apagarEmpresa } from "./actions";
 
 export default async function Empresas({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
-  let consulta = db().from("empresas").select("id, nome, participantes(count)").order("nome");
+  let consulta = db().from("empresas").select("id, nome, eventos(count)").order("nome");
   const termo = limparTermo(q);
   if (termo) consulta = consulta.ilike("nome", `%${termo}%`);
   const { data, error } = await consulta;
   if (error) throw new Error(error.message);
-  const empresas = data as unknown as { id: string; nome: string; participantes: { count: number }[] }[];
+  const empresas = data as unknown as { id: string; nome: string; eventos: { count: number }[] }[];
 
   return (
     <section className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Empresas</h1>
-          <p className="text-sm text-muted-foreground">Empresas cadastradas e quantos participantes cada uma tem.</p>
+          <p className="text-sm text-muted-foreground">Empresas cadastradas e quantos eventos cada uma tem.</p>
         </div>
         <Link href="/empresas/novo" className={buttonVariants()}>Nova empresa</Link>
       </div>
@@ -36,7 +36,7 @@ export default async function Empresas({ searchParams }: { searchParams: Promise
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead className="text-right">Participantes</TableHead>
+                <TableHead className="text-right">Eventos</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -46,7 +46,7 @@ export default async function Empresas({ searchParams }: { searchParams: Promise
                   <TableCell>
                     <Link href={`/empresas/${e.id}`} className="hover:underline">{e.nome}</Link>
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{e.participantes[0]?.count ?? 0}</TableCell>
+                  <TableCell className="text-right tabular-nums">{e.eventos[0]?.count ?? 0}</TableCell>
                   <TableCell className="text-right">
                     <BotaoApagar acao={apagarEmpresa.bind(null, e.id)} confirmacao={`Apagar a empresa ${e.nome}?`} />
                   </TableCell>
