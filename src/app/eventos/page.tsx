@@ -7,16 +7,16 @@ import { db } from "@/lib/supabase";
 import { formatarData, TIPOS_EVENTO, type TipoEvento } from "@/lib/dominio";
 
 export default async function Eventos() {
-  const { data, error } = await db().from("eventos").select("id, nome, tipo, data, empresa:empresas(nome), inscricoes(count)").order("data", { ascending: false });
+  const { data, error } = await db().from("eventos").select("id, nome, tipo, data, empresa:empresas(nome), participantes(count)").order("data", { ascending: false });
   if (error) throw new Error(error.message);
-  const eventos = data as unknown as { id: string; nome: string; tipo: TipoEvento; data: string; empresa: { nome: string }; inscricoes: { count: number }[] }[];
+  const eventos = data as unknown as { id: string; nome: string; tipo: TipoEvento; data: string; empresa: { nome: string }; participantes: { count: number }[] }[];
 
   return (
     <section className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Eventos</h1>
-          <p className="text-sm text-muted-foreground">Eventos cadastrados e o total de inscritos em cada um.</p>
+          <p className="text-sm text-muted-foreground">Eventos cadastrados e o total de participantes em cada um.</p>
         </div>
         <Link href="/eventos/novo" className={buttonVariants()}>Novo evento</Link>
       </div>
@@ -29,7 +29,7 @@ export default async function Eventos() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead className="text-right">Inscritos</TableHead>
+                <TableHead className="text-right">Participantes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -41,7 +41,7 @@ export default async function Eventos() {
                   </TableCell>
                   <TableCell>{e.empresa.nome}</TableCell>
                   <TableCell><Badge variant="secondary">{TIPOS_EVENTO[e.tipo]}</Badge></TableCell>
-                  <TableCell className="text-right tabular-nums">{e.inscricoes[0]?.count ?? 0}</TableCell>
+                  <TableCell className="text-right tabular-nums">{e.participantes[0]?.count ?? 0}</TableCell>
                 </TableRow>
               ))}
               {eventos.length === 0 && (

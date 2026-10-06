@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, CalendarDays, FileSpreadsheet, QrCode, Users, type LucideIcon } from "lucide-react";
+import { Building2, CalendarDays, QrCode, type LucideIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,10 +19,8 @@ import {
 import { GRUPOS, itemAtivo } from "@/lib/navegacao";
 
 const ICONES: Record<string, LucideIcon> = {
-  "/eventos": CalendarDays,
-  "/participantes": Users,
   "/empresas": Building2,
-  "/participantes/importar": FileSpreadsheet,
+  "/eventos": CalendarDays,
   "/checkin": QrCode,
 };
 

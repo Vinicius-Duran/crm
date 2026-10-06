@@ -23,7 +23,7 @@ const APELIDOS: Record<string, Coluna> = {
 };
 
 export type LinhaBruta = { linha: number } & Record<Coluna, string>;
-export type DadosImportacao = ParticipanteInput & { empresa: string | null };
+export type DadosImportacao = ParticipanteInput;
 export type LinhaValidada =
   | { linha: number; ok: true; dados: DadosImportacao }
   | { linha: number; ok: false; erros: string[] };
@@ -94,7 +94,7 @@ export function validarLinhas(linhas: LinhaBruta[]): LinhaValidada[] {
     const anterior = vistos.get(r.data.documento);
     if (anterior) return { linha: l.linha, ok: false, erros: [`Documento repetido na linha ${anterior}`] };
     vistos.set(r.data.documento, l.linha);
-    return { linha: l.linha, ok: true, dados: { ...r.data, empresa: l.empresa.replace(/\s+/g, " ").trim() || null } };
+    return { linha: l.linha, ok: true, dados: r.data };
   });
 }
 

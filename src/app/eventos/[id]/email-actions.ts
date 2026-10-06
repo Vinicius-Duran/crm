@@ -9,18 +9,18 @@ import type { EstadoAcao } from "@/lib/acao";
 
 const LOTE = 10;
 
-// Cota esgotada não marca erro: a inscrição continua pendente e entra no lote de amanhã.
+// Cota esgotada não marca erro: o participante continua pendente e entra no lote de amanhã.
 async function enviarERegistrar(c: Credencial): Promise<ResultadoEnvio> {
   const r = await enviarCredencial(c, await gerarCredencialPdf(c));
-  if (r.ok) await db().from("inscricoes").update({ email_enviado_em: new Date().toISOString(), email_erro: null }).eq("id", c.inscricaoId);
-  else if (!r.cotaEsgotada) await db().from("inscricoes").update({ email_erro: r.erro }).eq("id", c.inscricaoId);
+  if (r.ok) await db().from("participantes").update({ email_enviado_em: new Date().toISOString(), email_erro: null }).eq("id", c.participanteId);
+  else if (!r.cotaEsgotada) await db().from("participantes").update({ email_erro: r.erro }).eq("id", c.participanteId);
   return r;
 }
 
-export async function enviarEmailInscricao(inscricaoId: string): Promise<EstadoAcao> {
+export async function enviarEmailParticipante(participanteId: string): Promise<EstadoAcao> {
   if (!emailConfigurado()) return { ok: false, mensagem: "Envio por e-mail não configurado" };
-  const [c] = await carregarCredenciais({ ids: [inscricaoId] });
-  if (!c) return { ok: false, mensagem: "Inscrição não encontrada" };
+  const [c] = await carregarCredenciais({ ids: [participanteId] });
+  if (!c) return { ok: false, mensagem: "Participante não encontrado" };
   const r = await enviarERegistrar(c);
   revalidatePath("/eventos/[id]", "page");
   return r.ok ? { ok: true, mensagem: `E-mail enviado para ${c.email}` } : { ok: false, mensagem: r.erro };
@@ -33,7 +33,7 @@ export type ResultadoLote = { enviados: number; falhas: number; restantes: numbe
 export async function enviarLoteEmail(eventoId: string): Promise<ResultadoLote> {
   if (!emailConfigurado()) return { enviados: 0, falhas: 0, restantes: 0, cotaEsgotada: false };
   const pendentes = () =>
-    db().from("inscricoes").select("id", { count: "exact" }).eq("evento_id", eventoId).is("email_enviado_em", null).is("email_erro", null);
+    db().from("participantes").select("id", { count: "exact" }).eq("evento_id", eventoId).is("email_enviado_em", null).is("email_erro", null);
   const { data, error } = await pendentes().limit(LOTE);
   if (error) throw new Error(error.message);
   const credenciais = data.length ? await carregarCredenciais({ ids: data.map((d) => d.id as string) }) : [];

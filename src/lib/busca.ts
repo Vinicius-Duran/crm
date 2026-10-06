@@ -1,43 +1,35 @@
 import "server-only";
-import { z } from "zod";
 import { db } from "./supabase";
+import { ehUuid } from "./dominio";
 import { normalizarDocumento } from "./documento";
 import { limparTermo } from "./texto";
-import { TIPOS_PARTICIPANTE, type TipoParticipante } from "./dominio";
 
-export type ParticipanteListado = {
+export type ParticipanteEncontrado = {
   id: string;
   nome: string;
   documento: string;
-  email: string | null;
-  telefone: string | null;
-  tipo: TipoParticipante;
-  empresa: { id: string; nome: string } | null;
+  empresa: string | null;
+  checkin_em: string | null;
+  evento: { nome: string };
 };
 
-export type FiltroParticipantes = { termo?: string; empresaId?: string; tipo?: string; limite?: number };
-
-// Usada pela lista de participantes, pela tela de inscrever e pela busca manual do check-in.
-// ponytail: limite fixo sem paginação; a tela pede para refinar a busca quando bate no limite.
-export async function buscarParticipantes(f: FiltroParticipantes): Promise<ParticipanteListado[]> {
+// Busca manual do check-in, para quem chega sem QR legível: nome sem acento ou parte do documento.
+// Sem evento escolhido, procura em todos.
+export async function buscarParticipantes(f: { termo: string; eventoId: string | null; limite?: number }): Promise<ParticipanteEncontrado[]> {
+  const termo = limparTermo(f.termo);
+  if (termo.length < 2) return [];
+  const documento = normalizarDocumento(f.termo);
   let q = db()
     .from("participantes")
-    .select("id, nome, documento, email, telefone, tipo, empresa:empresas(id, nome)")
+    .select("id, nome, documento, empresa, checkin_em, evento:eventos(nome)")
     .order("nome_busca")
-    .limit(f.limite ?? 200);
-  const termo = limparTermo(f.termo ?? "");
-  const documento = normalizarDocumento(f.termo ?? "");
-  if (termo) {
-    q = documento.length >= 3
-      ? q.or(`nome_busca.ilike.%${termo}%,documento.ilike.%${documento}%`)
-      : q.ilike("nome_busca", `%${termo}%`);
-  }
+    .limit(f.limite ?? 30);
+  q = documento.length >= 3 ? q.or(`nome_busca.ilike.%${termo}%,documento.ilike.%${documento}%`) : q.ilike("nome_busca", `%${termo}%`);
   // Valor fora do domínio viraria erro de cast no Postgres; é ignorado.
-  if (f.empresaId && z.uuid().safeParse(f.empresaId).success) q = q.eq("empresa_id", f.empresaId);
-  if (f.tipo && f.tipo in TIPOS_PARTICIPANTE) q = q.eq("tipo", f.tipo);
+  if (f.eventoId && ehUuid(f.eventoId)) q = q.eq("evento_id", f.eventoId);
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-  return data as unknown as ParticipanteListado[];
+  return data as unknown as ParticipanteEncontrado[];
 }
 
 export async function listarEmpresas(): Promise<{ id: string; nome: string }[]> {

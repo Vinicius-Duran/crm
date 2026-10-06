@@ -26,6 +26,7 @@ describe("participanteSchema", () => {
       data_nascimento: "",
       email: "",
       telefone: " ",
+      empresa: "  Acme   Ltda ",
       tipo: "vip",
     });
     expect(r).toEqual({
@@ -34,6 +35,7 @@ describe("participanteSchema", () => {
       data_nascimento: null,
       email: null,
       telefone: null,
+      empresa: "Acme Ltda",
       tipo: "vip",
     });
   });
@@ -44,6 +46,7 @@ describe("participanteSchema", () => {
       data_nascimento: "1990-13-01",
       email: "nao-e-email",
       telefone: "",
+      empresa: "",
       tipo: "imprensa",
     });
     expect(r.success).toBe(false);

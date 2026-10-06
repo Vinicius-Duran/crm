@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { enviarEmailInscricao, enviarLoteEmail } from "./email-actions";
+import { enviarEmailParticipante, enviarLoteEmail } from "./email-actions";
 
 export function EnvioEmail({ eventoId, configurado }: { eventoId: string; configurado: boolean }) {
   const [progresso, setProgresso] = useState("");
@@ -48,7 +48,7 @@ export function EnvioEmail({ eventoId, configurado }: { eventoId: string; config
   );
 }
 
-export function BotaoEmailUm({ inscricaoId }: { inscricaoId: string }) {
+export function BotaoEmailUm({ participanteId }: { participanteId: string }) {
   const [pendente, iniciar] = useTransition();
   return (
     <Button
@@ -58,7 +58,7 @@ export function BotaoEmailUm({ inscricaoId }: { inscricaoId: string }) {
       disabled={pendente}
       onClick={() =>
         iniciar(async () => {
-          const r = await enviarEmailInscricao(inscricaoId);
+          const r = await enviarEmailParticipante(participanteId);
           if (r.ok) toast.success(r.mensagem);
           else toast.error(r.mensagem);
         })
