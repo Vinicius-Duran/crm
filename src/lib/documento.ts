@@ -2,6 +2,11 @@ export function normalizarDocumento(valor: string): string {
   return valor.replace(/[^0-9a-zA-Z]/g, "").toUpperCase();
 }
 
+// O banco guarda só dígitos/letras; na tela, CPF volta a ter pontos e traço.
+export function formatarDocumento(documento: string): string {
+  return /^\d{11}$/.test(documento) ? documento.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : documento;
+}
+
 export function cpfValido(cpf: string): boolean {
   if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
   const digito = (base: string) => {
