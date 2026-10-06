@@ -81,16 +81,16 @@ export async function importar(eventoId: string, form: FormData): Promise<{ ok: 
     return { ok: false, mensagem: FALHA_BANCO };
   }
 
-  const { data: gravados, error } = await db()
+  // Sem .select() na volta: o PostgREST devolveria no máximo 1.000 linhas e a contagem sairia errada.
+  const { error } = await db()
     .from("participantes")
     .upsert(
       validos.map((p) => ({ ...p, nome_busca: normalizarBusca(p.nome), evento_id: eventoId, codigo: ja.get(p.documento) ?? gerarCodigo() })),
       { onConflict: "evento_id,documento" },
-    )
-    .select("id");
+    );
   if (error) return { ok: false, mensagem: `Erro ao gravar participantes: ${error.message}` };
 
   revalidatePath(`/eventos/${eventoId}`);
   const ignoradas = lida.linhas.length - validos.length;
-  return { ok: true, mensagem: `${gravados.length} participantes gravados${ignoradas ? `, ${ignoradas} linhas com erro ignoradas` : ""}` };
+  return { ok: true, mensagem: `${validos.length} participantes gravados${ignoradas ? `, ${ignoradas} linhas com erro ignoradas` : ""}` };
 }
