@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
 import { unzipSync } from "fflate";
 import { gerarCredencialPdf, textosCredencial } from "./pdf";
-import { montarZip, nomeArquivo } from "./zip";
+import { juntarZips, montarZip, nomeArquivo } from "./zip";
 
 const dados = {
   nome: "José Conceição",
@@ -58,5 +58,16 @@ describe("montarZip", () => {
 
   it("nome só com símbolo vira participante", () => {
     expect(nomeArquivo("李")).toBe("participante");
+  });
+});
+
+describe("juntarZips", () => {
+  it("junta os lotes num ZIP só sem um homônimo de outro lote sobrescrever o primeiro", () => {
+    const pdf = (n: number) => new Uint8Array([n]);
+    const lote1 = montarZip([{ nome: "João Silva", conteudo: pdf(1) }, { nome: "João Silva", conteudo: pdf(2) }]);
+    const lote2 = montarZip([{ nome: "João Silva", conteudo: pdf(3) }, { nome: "Maria", conteudo: pdf(4) }]);
+    const zip = unzipSync(juntarZips([lote1, lote2]));
+    expect(Object.keys(zip).sort()).toEqual(["joao-silva-2.pdf", "joao-silva-3.pdf", "joao-silva.pdf", "maria.pdf"]);
+    expect([...zip["joao-silva.pdf"], ...zip["joao-silva-2.pdf"], ...zip["joao-silva-3.pdf"], ...zip["maria.pdf"]]).toEqual([1, 2, 3, 4]);
   });
 });

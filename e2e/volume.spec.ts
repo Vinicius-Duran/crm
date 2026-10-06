@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { unzipSync } from "fflate";
 import { createClient } from "@supabase/supabase-js";
 
 // O PostgREST devolve no máximo 1.000 linhas por consulta. Com 1.005 participantes, qualquer tela ou
@@ -27,7 +29,7 @@ test.afterAll(async () => {
   await db().from("empresas").delete().like("nome", `${PREFIXO}%`);
 });
 
-test("evento com mais de 1.000 participantes: contadores, paginação de 20 e CSV completo", async ({ page, request }, info) => {
+test("evento com mais de 1.000 participantes: contadores, paginação de 20, CSV e ZIP completos", async ({ page, request }, info) => {
   test.setTimeout(240_000);
   const tag = `${PREFIXO} ${info.project.name}`;
   const { data: empresa } = await db().from("empresas").insert({ nome: `${tag} Acme` }).select("id").single();
@@ -66,4 +68,14 @@ test("evento com mais de 1.000 participantes: contadores, paginação de 20 e CS
   const csv = await (await request.get(`/eventos/${eventoId}/csv`)).text();
   const dados = csv.split("\r\n").filter((l) => l.includes(`${tag} Convenção`));
   expect(dados).toHaveLength(TOTAL);
+
+  // ZIP montado no navegador a partir de lotes de 500: 1.005 credenciais em 3 pedidos, um arquivo só.
+  await page.goto(`/eventos/${eventoId}`);
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Baixar PDFs (ZIP)" }).click();
+  const arquivo = await download;
+  expect(arquivo.suggestedFilename()).toMatch(/convencao\.zip$/);
+  const entradas = Object.keys(unzipSync(new Uint8Array(readFileSync((await arquivo.path())!))));
+  expect(entradas).toHaveLength(TOTAL);
+  expect(entradas).toContain("pessoa-1005.pdf");
 });

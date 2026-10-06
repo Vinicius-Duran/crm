@@ -14,6 +14,7 @@ import { ehUuid, formatarData, TIPOS_EVENTO, TIPOS_PARTICIPANTE, type TipoEvento
 import { apagarEvento } from "../actions";
 import { apagarParticipante } from "./participantes/actions";
 import { EnvioEmail, BotaoEmailUm } from "./envio-email";
+import { BaixarZip } from "./baixar-zip";
 
 type Participante = {
   id: string;
@@ -76,7 +77,7 @@ export default async function Evento({ params, searchParams }: { params: Promise
           <Link href={`/eventos/${id}/participantes/novo`} className={buttonVariants()}>Adicionar participante</Link>
           <Link href={`/eventos/${id}/importar`} className={buttonVariants({ variant: "outline" })}>Importar planilha</Link>
           <a href={`/eventos/${id}/csv`} className={buttonVariants({ variant: "outline" })}>Exportar CSV</a>
-          <a href={`/eventos/${id}/zip`} className={buttonVariants({ variant: "outline" })}>Baixar PDFs (ZIP)</a>
+          <BaixarZip eventoId={id} nome={evento.nome} total={inscritos} />
           <Link href={`/eventos/${id}/editar`} className={buttonVariants({ variant: "outline" })}>Editar</Link>
           <BotaoApagar acao={apagarEvento.bind(null, id)} confirmacao={`Apagar o evento ${evento.nome} e todos os participantes dele?`} rotulo="Apagar evento" />
         </div>
