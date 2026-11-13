@@ -25,6 +25,9 @@ adivinhar, nunca usar valor de exemplo.
 | Responsável das tarefas | `Vinicius-Duran` |
 | Raiz dos repositórios na máquina | não definida — varia por máquina; ver nota na seção 2 |
 | Idioma de artefatos e comentários | português do Brasil |
+| Plataforma | `github` (`github` / `azure` / `outra`) — decide a skill de PR e por onde os agentes leem a issue |
+| Telegram | `ligado` (`ligado` / `desligado`) — canal do celular para este repositório |
+| App DigitalOcean autorizado | `<<PREENCHER>>` — nome do app que o pipeline pode tocar na DigitalOcean, ou "nenhum" |
 
 > **Issue Types não existem aqui.** O repositório é de conta de usuário, e Issue Types são recurso de
 > organização. A taxonomia é só por label (seção 5). O repositório é **público**: nunca anexe dados
@@ -209,6 +212,7 @@ que taxonomia pequena.
 | `{label-code-review}` | `em-code-review` | Em revisão de código | **sim** |
 | `{label-bloqueio}` | `bloqueado` | Bloqueada — precisa de decisão humana | **sim** (fim de linha em falha) |
 | `{label-fora-do-pipeline}` | `rascunho` | Ainda em descrição — não entra no pipeline | **não** — é a pessoa que aplica e remove |
+| `{label-aprovada}` | `aprovada` | Aprovada pela pessoa — a fila automática pode pegar | **não** — só a pessoa aplica e remove |
 
 Além dos de estágio, o repositório usa `fatia` (issue guarda-chuva, escrita a partir da spec) e
 `tarefa` (uma por tarefa do plano). O pipeline não escreve nenhum dos dois.
@@ -516,3 +520,42 @@ Valem para todos os agentes, em todos os artefatos que saem deste pipeline:
 7. **Execução desassistida.** Nenhum agente faz pergunta e aguarda resposta, nem interrompe a fila
    esperando decisão humana. O que não puder ser resolvido é documentado em artefato, marcado como
    `bloqueado`, e deixado para trás — a fila segue. Ver 5.3.
+
+## 9. Convenções de issue
+
+Aplica-se quando `Plataforma` (seção 1) é `github`: a taxonomia de Issue Types e labels deste
+repositório, usada para **classificar** issue — diferente dos labels de **estágio do pipeline**
+(seção 5, que só o `coordenador` escreve). Um agente só usa o que estiver preenchido aqui; campo em
+`<<PREENCHER>>` é tratado como ausente, nunca adivinhado.
+
+### Issue Types
+
+| Item | Valor |
+|---|---|
+| Esta organização usa Issue Type? | `não` — conta de usuário, não organização; Issue Type é recurso de organização |
+| Tipos existentes | — |
+| Criar ou editar type exige escopo `admin:org`? | — |
+| Comando para aplicar um type numa issue | — |
+
+### Labels de issue
+
+| Categoria | Labels deste repositório |
+|---|---|
+| Tipo (o que a issue *é*) | `fatia`, `tarefa`, `bug` |
+| Área | `<<PREENCHER>>` |
+| Natureza | `<<PREENCHER>>` |
+
+Antes de propor um label novo, confira se um já existente nesta tabela cobre o mesmo papel —
+taxonomia que ninguém aplica é pior que taxonomia pequena.
+
+### Guarda-chuva e sub-issue
+
+| Item | Valor |
+|---|---|
+| Label do issue guarda-chuva (uma fatia do plano) | `fatia` |
+| Label do issue de tarefa | `tarefa` |
+| Como a tarefa vira sub-issue do guarda-chuva | API de sub-issues (`gh api repos/{owner}/{repo}/issues/{pai}/sub_issues -f sub_issue_id=<id>`), ou checklist no corpo do guarda-chuva |
+
+A fila automática usa o label do guarda-chuva para **nunca** despachar uma fatia como se fosse
+tarefa, mesmo que ela receba `aprovada` por engano.
+
