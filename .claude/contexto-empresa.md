@@ -251,6 +251,24 @@ pela mesma razão que o comentário de entrega, depois do PR existir. Já os lab
 O pipeline **nunca reabre** uma issue fechada. Issue fechada é tarefa concluída; se ela precisar
 voltar, quem reabre é uma pessoa.
 
+## 5.4 Labels de PR
+
+Papéis de label para o ciclo de revisão automática de PR (um segundo revisor e um ajustador, à parte
+do pipeline de tarefa). Só são **obrigatórios** em repositório inscrito na fila automática — listado
+em `~/.claude/esteira-fila.json` —, que é onde o revisor e o ajustador rodam. Fora da fila automática,
+deixe os cinco campos como `<<PREENCHER>>`: nenhuma outra parte do pipeline depende deles.
+
+| Papel | Nome neste projeto | Quem aplica | Significado |
+|---|---|---|---|
+| `{label-pr-finalizada}` | `finalizada` | `finalizador`, ao abrir a PR; `coordenador`, ao terminar uma rodada de ajuste | Pronta para o revisor automático |
+| `{label-pr-em-revisao}` | `em-revisao` | revisor, ao começar a rodada | A rodada seguinte não revisa a mesma PR duas vezes |
+| `{label-pr-ajustes}` | `ajustes-pendentes` | revisor, quando sobrou achado 🟡 ou 🔴 | Sinal para o ajustador agir |
+| `{label-pr-revisada}` | `revisada` | revisor, quando não sobrou achado acima de 🟢 | Pronta para o autor mesclar |
+| `{label-pr-bloqueada}` | `bloqueada` | revisor ou ajustador, no limite de rodadas ou em falha que exige pessoa | O autor precisa entrar |
+
+Estes labels são **mutuamente exclusivos** — ao aplicar um, remove-se o anterior — e foram criados no
+repositório com as cores `0052CC`, `FBCA04`, `D93F0B`, `0E8A16` e `B60205`, nesta ordem.
+
 ## 5.1 Elegibilidade da tarefa
 
 Uma tarefa só entra no pipeline se atender a **todos** os critérios abaixo. A verificação é feita
