@@ -18,10 +18,13 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getClaims();
+  // getUser() (não getClaims()) revalida com o servidor do Auth a cada pedido: é o que faz um
+  // usuário desativado no meio da sessão perder o acesso no próximo pedido (getClaims() só decodifica
+  // o JWT local, que continua "válido" até expirar sozinho, sem saber que o usuário foi banido).
+  const { data } = await supabase.auth.getUser();
   const { pathname, search } = request.nextUrl;
 
-  if (data) {
+  if (data.user) {
     if (pathname === "/entrar") return NextResponse.redirect(new URL("/", request.url));
     return resposta;
   }

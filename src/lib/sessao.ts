@@ -23,15 +23,18 @@ type LinhaUsuario = {
 };
 
 // cache(): uma consulta só por requisição, mesmo com várias chamadas (layout, página, action).
+// getUser() (não getClaims()) revalida com o servidor do Auth a cada pedido: getClaims() só
+// decodifica o JWT local, que continua "válido" até expirar sozinho mesmo depois de o usuário ser
+// desativado (ver src/proxy.ts) — sem isso, a conta banida continuaria vendo as páginas logadas.
 export const usuarioAtual = cache(async (): Promise<Usuario | null> => {
   const banco = await dbUsuario();
-  const { data: claims } = await banco.auth.getClaims();
-  if (!claims) return null;
+  const { data: autenticado } = await banco.auth.getUser();
+  if (!autenticado.user) return null;
 
   const { data } = await banco
     .from("usuarios")
     .select("id, nome, papel, admin_plataforma, contas(id, nome, slug, modulos)")
-    .eq("id", claims.claims.sub)
+    .eq("id", autenticado.user.id)
     .maybeSingle<LinhaUsuario>();
   if (!data) return null;
   const conta = Array.isArray(data.contas) ? data.contas[0] : data.contas;
@@ -40,7 +43,7 @@ export const usuarioAtual = cache(async (): Promise<Usuario | null> => {
   return {
     id: data.id,
     nome: data.nome,
-    email: (claims.claims.email as string | undefined) ?? "",
+    email: autenticado.user.email ?? "",
     papel: data.papel,
     adminPlataforma: data.admin_plataforma,
     conta: { id: conta.id, nome: conta.nome, slug: conta.slug, modulos: conta.modulos },
