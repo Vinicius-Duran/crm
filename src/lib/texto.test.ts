@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { gerarCodigo } from "./codigo";
-import { escaparHtml, iniciais, limparTermo, normalizarBusca } from "./texto";
+import { escaparHtml, iniciais, limparTermo, normalizarBusca, slugDe } from "./texto";
 
 describe("normalizarBusca", () => {
   it("tira acento, caixa e espaço sobrando", () => {
@@ -41,5 +41,20 @@ describe("iniciais", () => {
 
   it("mantém o acento da inicial", () => {
     expect(iniciais("Érica Ávila")).toBe("ÉÁ");
+  });
+});
+
+describe("slugDe", () => {
+  it("tira acento e caixa e troca o resto por hífen", () => {
+    expect(slugDe("Barbearia do Zé")).toBe("barbearia-do-ze");
+  });
+
+  it("não deixa hífen nas pontas", () => {
+    expect(slugDe("  --Ação--  ")).toBe("acao");
+  });
+
+  it("corta em 40 sem terminar em hífen", () => {
+    expect(slugDe("a".repeat(50))).toBe("a".repeat(40));
+    expect(slugDe(`${"b".repeat(39)} c`)).toBe("b".repeat(39));
   });
 });

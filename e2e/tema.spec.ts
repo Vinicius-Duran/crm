@@ -1,10 +1,28 @@
 import { expect, test } from "@playwright/test";
+import { apagarDadosDeTeste, criarContaDeTeste, criarUsuarioDeTeste, entrar } from "./sessao";
+
+const PREFIXO = `E2E ${Date.now()} tema`;
+
+let email: string;
+let senha: string;
+
+test.beforeAll(async () => {
+  const { contaId } = await criarContaDeTeste(PREFIXO, ["eventos"]);
+  const usuario = await criarUsuarioDeTeste(PREFIXO, contaId);
+  email = usuario.email;
+  senha = usuario.senha;
+});
+
+test.afterAll(async () => {
+  await apagarDadosDeTeste(PREFIXO);
+});
 
 // A lista de opções do <select> é desenhada pelo navegador. color-scheme: dark escurece o calendário
 // e as barras de rolagem, mas o Chrome no Windows ainda desenha a lista branca com o texto claro
 // herdado do tema; por isso a <option> leva fundo e texto do popover explícitos.
 test("tema escuro deixa o dropdown legível", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("tema", "escuro"));
+  await entrar(page, email, senha);
   await page.goto("/eventos/novo");
   await expect(page.locator("html")).toHaveClass(/dark/);
   const tipo = page.getByLabel("Tipo");

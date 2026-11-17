@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BotaoApagar } from "@/components/botao-apagar";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { emailConfigurado } from "@/lib/email";
 import { iniciais } from "@/lib/texto";
 import { paginar } from "@/lib/paginacao";
@@ -38,17 +38,18 @@ export default async function Evento({ params, searchParams }: { params: Promise
   const { id } = await params;
   if (!ehUuid(id)) notFound();
   const { pagina: paginaPedida } = await searchParams;
+  const banco = await dbUsuario();
   // Contagens feitas pelo banco: o PostgREST devolve no máximo 1.000 linhas, então contar a lista erraria.
-  const contar = () => db().from("participantes").select("id", { count: "exact", head: true }).eq("evento_id", id);
+  const contar = () => banco.from("participantes").select("id", { count: "exact", head: true }).eq("evento_id", id);
   const [{ data: evento }, { count: total, error: e1 }, { count: presentes, error: e2 }] = await Promise.all([
-    db().from("eventos").select("id, nome, tipo, data, empresa:empresas(id, nome)").eq("id", id).maybeSingle(),
+    banco.from("eventos").select("id, nome, tipo, data, empresa:empresas(id, nome)").eq("id", id).maybeSingle(),
     contar(),
     contar().not("checkin_em", "is", null),
   ]);
   if (!evento) notFound();
   if (e1 || e2) throw new Error((e1 ?? e2)!.message);
   const pag = paginar(paginaPedida, total ?? 0, POR_PAGINA);
-  const { data, error } = await db()
+  const { data, error } = await banco
     .from("participantes")
     .select("id, nome, email, empresa, tipo, documento, checkin_em, email_enviado_em, email_erro")
     .eq("evento_id", id)

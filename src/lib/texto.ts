@@ -25,3 +25,14 @@ export function iniciais(nome: string): string {
   const ultima = partes.length > 1 ? partes[partes.length - 1][0] : "";
   return (primeira + ultima).toLocaleUpperCase("pt-BR");
 }
+
+// Slug da conta, preenchido a partir do nome: "Barbearia do Zé" → "barbearia-do-ze". O corte em 40
+// (limite do slug no banco) pode cair num hífen, por isso a ponta é limpa de novo depois dele.
+export function slugDe(nome: string): string {
+  return semAcento(nome)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+    .replace(/-+$/, "");
+}

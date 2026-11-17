@@ -1,9 +1,9 @@
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { formatarData } from "@/lib/dominio";
 import { Leitor } from "./leitor";
 
 export default async function Checkin() {
-  const { data, error } = await db().from("eventos").select("id, nome, data").order("data", { ascending: false });
+  const { data, error } = await (await dbUsuario()).from("eventos").select("id, nome, data").order("data", { ascending: false });
   if (error) throw new Error(error.message);
   // Evento de hoje (fuso de Brasília) já vem selecionado; sem evento hoje, lê de qualquer um.
   const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });

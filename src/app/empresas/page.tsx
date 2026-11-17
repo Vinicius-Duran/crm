@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BotaoApagar } from "@/components/botao-apagar";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { limparTermo } from "@/lib/texto";
 import { apagarEmpresa } from "./actions";
 
 export default async function Empresas({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
-  let consulta = db().from("empresas").select("id, nome, eventos(count)").order("nome");
+  let consulta = (await dbUsuario()).from("empresas").select("id, nome, eventos(count)").order("nome");
   const termo = limparTermo(q);
   if (termo) consulta = consulta.ilike("nome", `%${termo}%`);
   const { data, error } = await consulta;

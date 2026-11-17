@@ -4,13 +4,14 @@ import { Label } from "@/components/ui/label";
 
 type Base = { nome: string; rotulo: string; erros?: string[] };
 
-function Moldura({ nome, rotulo, erros, children }: Base & { children: ReactNode }) {
+// `id` é o `nome` por padrão; muda só quando dois formulários da mesma página têm um campo de mesmo nome.
+function Moldura({ id, rotulo, erros, children }: { id: string; rotulo: string; erros?: string[]; children: ReactNode }) {
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor={nome}>{rotulo}</Label>
+      <Label htmlFor={id}>{rotulo}</Label>
       {children}
       {erros?.map((e) => (
-        <p key={e} id={`${nome}-erro`} className="text-sm text-destructive">
+        <p key={e} id={`${id}-erro`} className="text-sm text-destructive">
           {e}
         </p>
       ))}
@@ -18,10 +19,10 @@ function Moldura({ nome, rotulo, erros, children }: Base & { children: ReactNode
   );
 }
 
-export function Campo({ nome, rotulo, erros, ...props }: Base & ComponentProps<typeof Input>) {
+export function Campo({ nome, rotulo, erros, id = nome, ...props }: Base & ComponentProps<typeof Input>) {
   return (
-    <Moldura nome={nome} rotulo={rotulo} erros={erros}>
-      <Input id={nome} name={nome} aria-invalid={erros ? true : undefined} aria-describedby={erros ? `${nome}-erro` : undefined} {...props} />
+    <Moldura id={id} rotulo={rotulo} erros={erros}>
+      <Input id={id} name={nome} aria-invalid={erros ? true : undefined} aria-describedby={erros ? `${id}-erro` : undefined} {...props} />
     </Moldura>
   );
 }
@@ -36,7 +37,7 @@ export function Selecao({
   ...props
 }: Base & { opcoes: Record<string, string>; vazio?: string } & ComponentProps<"select">) {
   return (
-    <Moldura nome={nome} rotulo={rotulo} erros={erros}>
+    <Moldura id={nome} rotulo={rotulo} erros={erros}>
       <select
         id={nome}
         name={nome}

@@ -2,15 +2,23 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, type buttonVariants } from "@/components/ui/button";
 import type { EstadoAcao } from "@/lib/acao";
+import type { VariantProps } from "class-variance-authority";
 
-export function BotaoApagar({ acao, confirmacao, rotulo = "Apagar" }: { acao: () => Promise<EstadoAcao>; confirmacao: string; rotulo?: string }) {
+type Variante = VariantProps<typeof buttonVariants>["variant"];
+
+export function BotaoApagar({
+  acao,
+  confirmacao,
+  rotulo = "Apagar",
+  variant = "destructive",
+}: { acao: () => Promise<EstadoAcao>; confirmacao: string; rotulo?: string; variant?: Variante }) {
   const [pendente, iniciar] = useTransition();
   return (
     <Button
       type="button"
-      variant="destructive"
+      variant={variant}
       size="sm"
       disabled={pendente}
       onClick={() => {

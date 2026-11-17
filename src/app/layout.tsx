@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Casca } from "@/components/casca";
+import { usuarioAtual } from "@/lib/sessao";
 import "./globals.css";
 
 const geist = Geist({ variable: "--font-sans", subsets: ["latin"] });
@@ -16,7 +17,8 @@ export const dynamic = "force-dynamic";
 // Aplica o tema salvo antes da pintura, para a tela não piscar clara no modo escuro.
 const SCRIPT_TEMA = `try{var t=localStorage.getItem("tema");if(t==="escuro"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`;
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  const usuario = await usuarioAtual();
   return (
     <html lang="pt-BR" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
@@ -24,7 +26,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="min-h-dvh bg-background text-foreground antialiased">
         <TooltipProvider>
-          <Casca>{children}</Casca>
+          <Casca usuario={usuario}>{children}</Casca>
         </TooltipProvider>
         <Toaster richColors />
       </body>

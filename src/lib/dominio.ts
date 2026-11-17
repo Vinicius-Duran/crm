@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { validarDocumento } from "./documento";
 import { semAcento } from "./texto";
+import type { Papel } from "./sessao";
+
+export const PAPEIS: Record<Papel, string> = { dono: "Dono", barbeiro: "Barbeiro" };
+
+export const MODULOS = { eventos: "Eventos", barbearia: "Barbearia" } as const;
+export type Modulo = keyof typeof MODULOS;
 
 export const TIPOS_PARTICIPANTE = {
   palestrante: "Palestrante",
@@ -83,4 +89,33 @@ export type EventoInput = z.output<typeof eventoSchema>;
 
 export const empresaSchema = z.object({
   nome: z.string().trim().min(1, "Nome obrigatório").transform((v) => v.replace(/\s+/g, " ")),
+});
+
+// trim/toLowerCase antes do .pipe: z.email() recusa a string com espaço, então normalizar
+// precisa acontecer antes da validação de formato, não depois.
+export const entrarSchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email()),
+  senha: z.string().min(1, "Senha obrigatória"),
+  proximo: z.string().optional(),
+});
+
+export const usuarioSchema = z.object({
+  nome: z.string().trim().min(1, "Nome obrigatório"),
+  email: z.string().trim().toLowerCase().pipe(z.email()),
+  papel: z.enum(["dono", "barbeiro"], { message: "Papel inválido" }),
+  senha: z.string().min(8, "Mínimo de 8 caracteres"),
+});
+
+export const novaSenhaSchema = z
+  .object({
+    senha: z.string().min(8, "Mínimo de 8 caracteres"),
+    confirmacao: z.string(),
+  })
+  .refine((v) => v.senha === v.confirmacao, { message: "As senhas não coincidem", path: ["confirmacao"] });
+
+export const contaSchema = z.object({
+  nome: z.string().trim().min(1, "Nome obrigatório"),
+  slug: z.string().regex(/^[a-z0-9-]{3,40}$/, "De 3 a 40 caracteres: letras minúsculas, números e hífen"),
+  modulos: z.array(z.enum(Object.keys(MODULOS) as [Modulo, ...Modulo[]], { message: "Módulo desconhecido" })),
+  fuso: z.string().default("America/Sao_Paulo"),
 });

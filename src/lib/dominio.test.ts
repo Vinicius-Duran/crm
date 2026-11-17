@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dataIsoValida, ehUuid, eventoSchema, formatarData, lerTipoParticipante, participanteSchema } from "./dominio";
+import { contaSchema, dataIsoValida, ehUuid, entrarSchema, eventoSchema, formatarData, lerTipoParticipante, novaSenhaSchema, participanteSchema, usuarioSchema } from "./dominio";
 
 describe("lerTipoParticipante", () => {
   it("aceita plural, caixa e acento", () => {
@@ -83,5 +83,54 @@ describe("eventoSchema", () => {
     const r = eventoSchema.safeParse({ nome: "Kickoff 2027", tipo: "kickoff", data: "2027-01-15", empresa_id: "" });
     expect(r.success).toBe(false);
     expect(r.error!.issues.map((i) => i.message)).toEqual(["Escolha a empresa"]);
+  });
+});
+
+describe("entrarSchema", () => {
+  it("normaliza o e-mail com espaços e maiúsculas", () => {
+    expect(entrarSchema.parse({ email: " Ana@Email.com ", senha: "x" }).email).toBe("ana@email.com");
+  });
+
+  it("recusa e-mail inválido e senha vazia", () => {
+    expect(entrarSchema.safeParse({ email: "nao-e-email", senha: "x" }).success).toBe(false);
+    expect(entrarSchema.safeParse({ email: "ana@email.com", senha: "" }).success).toBe(false);
+  });
+});
+
+describe("usuarioSchema", () => {
+  it("normaliza o e-mail e aceita os dois papéis", () => {
+    const r = usuarioSchema.parse({ nome: "Ana", email: " Ana@Email.com ", papel: "barbeiro", senha: "12345678" });
+    expect(r.email).toBe("ana@email.com");
+  });
+
+  it("recusa senha com menos de 8 caracteres e papel desconhecido", () => {
+    expect(usuarioSchema.safeParse({ nome: "Ana", email: "ana@email.com", papel: "dono", senha: "1234567" }).success).toBe(false);
+    expect(usuarioSchema.safeParse({ nome: "Ana", email: "ana@email.com", papel: "gerente", senha: "12345678" }).success).toBe(false);
+  });
+});
+
+describe("novaSenhaSchema", () => {
+  it("aceita quando a confirmação é igual", () => {
+    expect(novaSenhaSchema.safeParse({ senha: "12345678", confirmacao: "12345678" }).success).toBe(true);
+  });
+
+  it("recusa confirmação diferente e senha curta", () => {
+    expect(novaSenhaSchema.safeParse({ senha: "12345678", confirmacao: "87654321" }).success).toBe(false);
+    expect(novaSenhaSchema.safeParse({ senha: "1234567", confirmacao: "1234567" }).success).toBe(false);
+  });
+});
+
+describe("contaSchema", () => {
+  const conta = { nome: "Barbearia do Zé", slug: "barbearia-do-ze", modulos: ["barbearia"], fuso: "America/Manaus" };
+
+  it("aceita conta sem módulo e preenche o fuso padrão", () => {
+    const r = contaSchema.parse({ nome: "Barbearia do Zé", slug: "barbearia-do-ze", modulos: [] });
+    expect(r).toEqual({ nome: "Barbearia do Zé", slug: "barbearia-do-ze", modulos: [], fuso: "America/Sao_Paulo" });
+  });
+
+  it("recusa slug com maiúscula e módulo desconhecido", () => {
+    expect(contaSchema.safeParse(conta).success).toBe(true);
+    expect(contaSchema.safeParse({ ...conta, slug: "Barbearia-do-ze" }).success).toBe(false);
+    expect(contaSchema.safeParse({ ...conta, modulos: ["eventos", "financeiro"] }).success).toBe(false);
   });
 });

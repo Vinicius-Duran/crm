@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { ehUuid, formatarData, TIPOS_EVENTO, type TipoEvento } from "@/lib/dominio";
 import { FormularioEmpresa } from "../formulario";
 
@@ -12,9 +12,10 @@ import { FormularioEmpresa } from "../formulario";
 export default async function Empresa({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!ehUuid(id)) notFound();
+  const banco = await dbUsuario();
   const [{ data: empresa }, { data, error }] = await Promise.all([
-    db().from("empresas").select("id, nome").eq("id", id).maybeSingle(),
-    db().from("eventos").select("id, nome, tipo, data").eq("empresa_id", id).order("data", { ascending: false }),
+    banco.from("empresas").select("id, nome").eq("id", id).maybeSingle(),
+    banco.from("eventos").select("id, nome, tipo, data").eq("empresa_id", id).order("data", { ascending: false }),
   ]);
   if (!empresa) notFound();
   if (error) throw new Error(error.message);

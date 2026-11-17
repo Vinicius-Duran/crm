@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { ehUuid } from "@/lib/dominio";
 import { lerPlanilha, validarLinhas, type LinhaValidada } from "@/lib/planilha";
 import { normalizarBusca } from "@/lib/texto";
@@ -33,8 +33,9 @@ async function ler(eventoId: string, form: FormData): Promise<Lida> {
 // .in() vai na URL; em fatias de 200 a URL fica abaixo do limite do PostgREST mesmo com milhares de linhas.
 async function codigosNoEvento(eventoId: string, documentos: string[]): Promise<Map<string, string>> {
   const mapa = new Map<string, string>();
+  const banco = await dbUsuario();
   for (let i = 0; i < documentos.length; i += 200) {
-    const { data, error } = await db()
+    const { data, error } = await banco
       .from("participantes")
       .select("documento, codigo")
       .eq("evento_id", eventoId)
@@ -82,7 +83,7 @@ export async function importar(eventoId: string, form: FormData): Promise<{ ok: 
   }
 
   // Sem .select() na volta: o PostgREST devolveria no máximo 1.000 linhas e a contagem sairia errada.
-  const { error } = await db()
+  const { error } = await (await dbUsuario())
     .from("participantes")
     .upsert(
       validos.map((p) => ({ ...p, nome_busca: normalizarBusca(p.nome), evento_id: eventoId, codigo: ja.get(p.documento) ?? gerarCodigo() })),

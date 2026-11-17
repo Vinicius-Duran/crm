@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { carregarCredenciais, type Credencial } from "@/lib/credencial";
 import { emailConfigurado, enviarCredencial, type ResultadoEnvio } from "@/lib/email";
 import { gerarCredencialPdf } from "@/lib/pdf";
@@ -12,8 +12,9 @@ const LOTE = 10;
 // Cota esgotada não marca erro: o participante continua pendente e entra no lote de amanhã.
 async function enviarERegistrar(c: Credencial): Promise<ResultadoEnvio> {
   const r = await enviarCredencial(c, await gerarCredencialPdf(c));
-  if (r.ok) await db().from("participantes").update({ email_enviado_em: new Date().toISOString(), email_erro: null }).eq("id", c.participanteId);
-  else if (!r.cotaEsgotada) await db().from("participantes").update({ email_erro: r.erro }).eq("id", c.participanteId);
+  const banco = await dbUsuario();
+  if (r.ok) await banco.from("participantes").update({ email_enviado_em: new Date().toISOString(), email_erro: null }).eq("id", c.participanteId);
+  else if (!r.cotaEsgotada) await banco.from("participantes").update({ email_erro: r.erro }).eq("id", c.participanteId);
   return r;
 }
 
@@ -32,8 +33,9 @@ export type ResultadoLote = { enviados: number; falhas: number; restantes: numbe
 // limite de duração da função na Vercel, e o progresso aparece na tela entre um lote e outro.
 export async function enviarLoteEmail(eventoId: string): Promise<ResultadoLote> {
   if (!emailConfigurado()) return { enviados: 0, falhas: 0, restantes: 0, cotaEsgotada: false };
+  const banco = await dbUsuario();
   const pendentes = () =>
-    db().from("participantes").select("id", { count: "exact" }).eq("evento_id", eventoId).is("email_enviado_em", null).is("email_erro", null);
+    banco.from("participantes").select("id", { count: "exact" }).eq("evento_id", eventoId).is("email_enviado_em", null).is("email_erro", null);
   const { data, error } = await pendentes().limit(LOTE);
   if (error) throw new Error(error.message);
   const credenciais = data.length ? await carregarCredenciais({ ids: data.map((d) => d.id as string) }) : [];

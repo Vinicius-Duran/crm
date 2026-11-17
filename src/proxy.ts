@@ -1,27 +1,47 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { autorizado } from "@/lib/acesso";
 
-// Todo o sistema fica atrás de usuário e senha (o navegador mostra a janela de login).
-export function proxy(request: NextRequest) {
-  const usuario = process.env.ADMIN_USER;
-  const senha = process.env.ADMIN_PASSWORD;
+// Renova a sessão do Supabase a cada pedido e redireciona para /entrar quem não tem.
+// O Basic Auth (ADMIN_USER/ADMIN_PASSWORD) continua como alternativa até a Tarefa 7.
+export async function proxy(request: NextRequest) {
+  let resposta = NextResponse.next({ request });
 
-  if (!usuario || !senha) {
-    // Em produção, sem credenciais configuradas, o sistema fica fechado em vez de aberto.
-    if (process.env.NODE_ENV === "production") {
-      return new NextResponse("Acesso não configurado: defina ADMIN_USER e ADMIN_PASSWORD.", {
-        status: 503,
-      });
-    }
-    return NextResponse.next();
+  const supabase = createServerClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll(cookiesToSet) {
+        for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
+        resposta = NextResponse.next({ request });
+        for (const { name, value, options } of cookiesToSet) resposta.cookies.set(name, value, options);
+      },
+    },
+  });
+
+  // getUser() (não getClaims()) revalida com o servidor do Auth a cada pedido: é o que faz um
+  // usuário desativado no meio da sessão perder o acesso no próximo pedido (getClaims() só decodifica
+  // o JWT local, que continua "válido" até expirar sozinho, sem saber que o usuário foi banido).
+  const { data } = await supabase.auth.getUser();
+  const { pathname, search } = request.nextUrl;
+
+  if (data.user) {
+    if (pathname === "/entrar") return NextResponse.redirect(new URL("/", request.url));
+    return resposta;
   }
 
-  if (autorizado(request.headers.get("authorization"), usuario, senha)) return NextResponse.next();
+  if (pathname === "/entrar") return resposta;
 
-  return new NextResponse("Acesso restrito.", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="CRM de eventos", charset="UTF-8"' },
-  });
+  const usuario = process.env.ADMIN_USER;
+  const senha = process.env.ADMIN_PASSWORD;
+  if (usuario && senha) {
+    if (autorizado(request.headers.get("authorization"), usuario, senha)) return resposta;
+    return new NextResponse("Acesso restrito.", {
+      status: 401,
+      headers: { "WWW-Authenticate": 'Basic realm="CRM de eventos", charset="UTF-8"' },
+    });
+  }
+
+  return NextResponse.redirect(new URL(`/entrar?proximo=${encodeURIComponent(pathname + search)}`, request.url));
 }
 
 export const config = {
