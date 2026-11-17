@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dataIsoValida, ehUuid, entrarSchema, eventoSchema, formatarData, lerTipoParticipante, novaSenhaSchema, participanteSchema, usuarioSchema } from "./dominio";
+import { contaSchema, dataIsoValida, ehUuid, entrarSchema, eventoSchema, formatarData, lerTipoParticipante, novaSenhaSchema, participanteSchema, usuarioSchema } from "./dominio";
 
 describe("lerTipoParticipante", () => {
   it("aceita plural, caixa e acento", () => {
@@ -117,5 +117,20 @@ describe("novaSenhaSchema", () => {
   it("recusa confirmação diferente e senha curta", () => {
     expect(novaSenhaSchema.safeParse({ senha: "12345678", confirmacao: "87654321" }).success).toBe(false);
     expect(novaSenhaSchema.safeParse({ senha: "1234567", confirmacao: "1234567" }).success).toBe(false);
+  });
+});
+
+describe("contaSchema", () => {
+  const conta = { nome: "Barbearia do Zé", slug: "barbearia-do-ze", modulos: ["barbearia"], fuso: "America/Manaus" };
+
+  it("aceita conta sem módulo e preenche o fuso padrão", () => {
+    const r = contaSchema.parse({ nome: "Barbearia do Zé", slug: "barbearia-do-ze", modulos: [] });
+    expect(r).toEqual({ nome: "Barbearia do Zé", slug: "barbearia-do-ze", modulos: [], fuso: "America/Sao_Paulo" });
+  });
+
+  it("recusa slug com maiúscula e módulo desconhecido", () => {
+    expect(contaSchema.safeParse(conta).success).toBe(true);
+    expect(contaSchema.safeParse({ ...conta, slug: "Barbearia-do-ze" }).success).toBe(false);
+    expect(contaSchema.safeParse({ ...conta, modulos: ["eventos", "financeiro"] }).success).toBe(false);
   });
 });

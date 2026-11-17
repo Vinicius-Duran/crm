@@ -5,6 +5,9 @@ import type { Papel } from "./sessao";
 
 export const PAPEIS: Record<Papel, string> = { dono: "Dono", barbeiro: "Barbeiro" };
 
+export const MODULOS = { eventos: "Eventos", barbearia: "Barbearia" } as const;
+export type Modulo = keyof typeof MODULOS;
+
 export const TIPOS_PARTICIPANTE = {
   palestrante: "Palestrante",
   vip: "VIP",
@@ -109,3 +112,10 @@ export const novaSenhaSchema = z
     confirmacao: z.string(),
   })
   .refine((v) => v.senha === v.confirmacao, { message: "As senhas não coincidem", path: ["confirmacao"] });
+
+export const contaSchema = z.object({
+  nome: z.string().trim().min(1, "Nome obrigatório"),
+  slug: z.string().regex(/^[a-z0-9-]{3,40}$/, "De 3 a 40 caracteres: letras minúsculas, números e hífen"),
+  modulos: z.array(z.enum(Object.keys(MODULOS) as [Modulo, ...Modulo[]], { message: "Módulo desconhecido" })),
+  fuso: z.string().default("America/Sao_Paulo"),
+});
