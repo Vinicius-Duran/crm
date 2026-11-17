@@ -84,3 +84,11 @@ export type EventoInput = z.output<typeof eventoSchema>;
 export const empresaSchema = z.object({
   nome: z.string().trim().min(1, "Nome obrigatório").transform((v) => v.replace(/\s+/g, " ")),
 });
+
+// trim/toLowerCase antes do .pipe: z.email() recusa a string com espaço, então normalizar
+// precisa acontecer antes da validação de formato, não depois.
+export const entrarSchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email()),
+  senha: z.string().min(1, "Senha obrigatória"),
+  proximo: z.string().optional(),
+});

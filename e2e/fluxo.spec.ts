@@ -1,10 +1,21 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { apagarDadosDeTeste, criarContaDeTeste, criarUsuarioDeTeste, entrar } from "./sessao";
 
 // Tudo que o teste cria leva este prefixo e é apagado no fim, mesmo se o teste falhar.
 const SUFIXO = `${Date.now()}`;
 const PREFIXO = `E2E ${SUFIXO}`;
 const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+
+let email: string;
+let senha: string;
+
+test.beforeAll(async () => {
+  const { contaId } = await criarContaDeTeste(PREFIXO, ["eventos"]);
+  const usuario = await criarUsuarioDeTeste(PREFIXO, contaId);
+  email = usuario.email;
+  senha = usuario.senha;
+});
 
 function gerarCpf(): string {
   const base = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
@@ -31,12 +42,14 @@ test.afterAll(async () => {
   // Apagar o evento apaga os participantes dele (on delete cascade).
   await db.from("eventos").delete().like("nome", `${PREFIXO}%`);
   await db.from("empresas").delete().like("nome", `${PREFIXO}%`);
+  await apagarDadosDeTeste(PREFIXO);
 });
 
 test("empresa, evento, participantes, importação, PDF, check-in e CSV", async ({ page, request }, info) => {
   const tag = `${PREFIXO} ${info.project.name}`;
   const cpf = gerarCpf();
   const cpfImportado = gerarCpf();
+  await entrar(page, email, senha);
 
   // Empresa, e a mesma de novo (com outra caixa) para ver a mensagem de duplicada
   await page.goto("/empresas/novo");

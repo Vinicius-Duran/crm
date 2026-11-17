@@ -2,12 +2,23 @@ import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { unzipSync } from "fflate";
 import { createClient } from "@supabase/supabase-js";
+import { apagarDadosDeTeste, criarContaDeTeste, criarUsuarioDeTeste, entrar } from "./sessao";
 
 // O PostgREST devolve no máximo 1.000 linhas por consulta. Com 1.005 participantes, qualquer tela ou
 // exportação que leia o evento de uma vez mostra 1.000 e erra os contadores.
 const TOTAL = 1005;
 const PREFIXO = `E2E ${Date.now()} volume`;
 const db = () => createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+
+let email: string;
+let senha: string;
+
+test.beforeAll(async () => {
+  const { contaId } = await criarContaDeTeste(PREFIXO, ["eventos"]);
+  const usuario = await criarUsuarioDeTeste(PREFIXO, contaId);
+  email = usuario.email;
+  senha = usuario.senha;
+});
 
 function cpfs(n: number): string[] {
   const usados = new Set<string>();
@@ -27,11 +38,13 @@ function cpfs(n: number): string[] {
 test.afterAll(async () => {
   await db().from("eventos").delete().like("nome", `${PREFIXO}%`);
   await db().from("empresas").delete().like("nome", `${PREFIXO}%`);
+  await apagarDadosDeTeste(PREFIXO);
 });
 
 test("evento com mais de 1.000 participantes: contadores, paginação de 20, CSV e ZIP completos", async ({ page, request }, info) => {
   test.setTimeout(240_000);
   const tag = `${PREFIXO} ${info.project.name}`;
+  await entrar(page, email, senha);
   const { data: empresa } = await db().from("empresas").insert({ nome: `${tag} Acme` }).select("id").single();
   const { data: evento } = await db()
     .from("eventos")

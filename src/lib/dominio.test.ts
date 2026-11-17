@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dataIsoValida, ehUuid, eventoSchema, formatarData, lerTipoParticipante, participanteSchema } from "./dominio";
+import { dataIsoValida, ehUuid, entrarSchema, eventoSchema, formatarData, lerTipoParticipante, participanteSchema } from "./dominio";
 
 describe("lerTipoParticipante", () => {
   it("aceita plural, caixa e acento", () => {
@@ -83,5 +83,16 @@ describe("eventoSchema", () => {
     const r = eventoSchema.safeParse({ nome: "Kickoff 2027", tipo: "kickoff", data: "2027-01-15", empresa_id: "" });
     expect(r.success).toBe(false);
     expect(r.error!.issues.map((i) => i.message)).toEqual(["Escolha a empresa"]);
+  });
+});
+
+describe("entrarSchema", () => {
+  it("normaliza o e-mail com espaços e maiúsculas", () => {
+    expect(entrarSchema.parse({ email: " Ana@Email.com ", senha: "x" }).email).toBe("ana@email.com");
+  });
+
+  it("recusa e-mail inválido e senha vazia", () => {
+    expect(entrarSchema.safeParse({ email: "nao-e-email", senha: "x" }).success).toBe(false);
+    expect(entrarSchema.safeParse({ email: "ana@email.com", senha: "" }).success).toBe(false);
   });
 });

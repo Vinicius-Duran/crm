@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { sair } from "@/app/entrar/actions";
 import { trilha } from "@/lib/navegacao";
 
 function alternarTema() {
@@ -50,6 +51,12 @@ export function BarraSuperior() {
         <Sun className="hidden dark:block" />
         <Moon className="dark:hidden" />
       </Button>
+      {/* Nome do usuário e da conta chegam na Tarefa 3; aqui só o essencial para sair. */}
+      <form action={sair}>
+        <Button type="submit" variant="ghost" size="sm">
+          Sair
+        </Button>
+      </form>
     </header>
   );
 }
