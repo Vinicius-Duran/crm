@@ -41,7 +41,7 @@ test.afterAll(async () => {
   await apagarDadosDeTeste(PREFIXO);
 });
 
-test("evento com mais de 1.000 participantes: contadores, paginação de 20, CSV e ZIP completos", async ({ page, request }, info) => {
+test("evento com mais de 1.000 participantes: contadores, paginação de 20, CSV e ZIP completos", async ({ page }, info) => {
   test.setTimeout(240_000);
   const tag = `${PREFIXO} ${info.project.name}`;
   await entrar(page, email, senha);
@@ -78,7 +78,8 @@ test("evento com mais de 1.000 participantes: contadores, paginação de 20, CSV
   await expect(page.getByText("1.001–1.005 de 1.005 · página 51 de 51")).toBeVisible();
   await expect(page.getByRole("row")).toHaveCount(6);
 
-  const csv = await (await request.get(`/eventos/${eventoId}/csv`)).text();
+  // page.request (não o fixture request) compartilha os cookies da sessão da página.
+  const csv = await (await page.request.get(`/eventos/${eventoId}/csv`)).text();
   const dados = csv.split("\r\n").filter((l) => l.includes(`${tag} Convenção`));
   expect(dados).toHaveLength(TOTAL);
 

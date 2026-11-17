@@ -45,7 +45,7 @@ test.afterAll(async () => {
   await apagarDadosDeTeste(PREFIXO);
 });
 
-test("empresa, evento, participantes, importação, PDF, check-in e CSV", async ({ page, request }, info) => {
+test("empresa, evento, participantes, importação, PDF, check-in e CSV", async ({ page }, info) => {
   const tag = `${PREFIXO} ${info.project.name}`;
   const cpf = gerarCpf();
   const cpfImportado = gerarCpf();
@@ -125,9 +125,10 @@ test("empresa, evento, participantes, importação, PDF, check-in e CSV", async 
 
   // PDF individual e ZIP
   const pdfHref = await linha.getByRole("link", { name: "PDF" }).getAttribute("href");
-  const pdf = await request.get(pdfHref!);
+  // page.request (não o fixture request) compartilha os cookies da sessão da página.
+  const pdf = await page.request.get(pdfHref!);
   expect(pdf.headers()["content-type"]).toBe("application/pdf");
-  const zip = await request.get(`/eventos/${eventoId}/zip`);
+  const zip = await page.request.get(`/eventos/${eventoId}/zip`);
   expect(zip.headers()["content-type"]).toBe("application/zip");
 
   // Check-in pelo campo de código: verde, depois amarelo, desconhecido e outro evento
@@ -167,7 +168,7 @@ test("empresa, evento, participantes, importação, PDF, check-in e CSV", async 
   await expect(linha.getByText("Fornecedora Nova")).toBeVisible();
 
   // CSV do evento: quem veio tem Sim e a hora de chegada; quem não veio, Não
-  const csv = await (await request.get(`/eventos/${eventoId}/csv`)).text();
+  const csv = await (await page.request.get(`/eventos/${eventoId}/csv`)).text();
   const linhas = csv.split("\r\n");
   expect(linhas.find((l) => l.includes("José Conceição"))).toMatch(
     new RegExp(`^${tag} Acme;${tag} Kickoff;Kickoff;.*;VIP;Sim;\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}$`),

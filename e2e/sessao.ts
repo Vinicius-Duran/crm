@@ -47,7 +47,9 @@ export async function entrar(page: Page, email: string, senha: string): Promise<
   await page.goto("/entrar");
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(senha);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  // Clique e navegação precisam ser aguardados juntos: sem isso, quem chama entrar() segue para a
+  // próxima página antes do redirect do login terminar, e a sessão ainda não existe.
+  await Promise.all([page.waitForURL((url) => url.pathname !== "/entrar"), page.getByRole("button", { name: "Entrar" }).click()]);
 }
 
 // Apaga pelo prefixo: usuários do Auth cujo e-mail leva "e2e-<prefixo>-" e as contas cujo nome
