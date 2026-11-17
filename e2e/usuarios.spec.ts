@@ -21,7 +21,7 @@ test.afterAll(async () => {
   await apagarDadosDeTeste(PREFIXO);
 });
 
-test("dono cria usuário, redefine a senha e desativa; o novo troca a senha e perde o acesso", async ({ page, context }, info) => {
+test("dono cria usuário, redefine a senha e desativa; o novo troca a senha e perde o acesso", async ({ page, browser }, info) => {
   // Cada projeto (desktop/celular) roda com a própria conta (criada no beforeAll), mas o e-mail do
   // usuário novo é escolhido aqui, à mão: precisa ser único entre os dois projetos.
   const emailNovo = `e2e-${PREFIXO.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-novo-${info.project.name}@exemplo.test`;
@@ -41,12 +41,6 @@ test("dono cria usuário, redefine a senha e desativa; o novo troca a senha e pe
   await page.getByRole("button", { name: "Sair" }).click();
   await entrar(page, emailNovo, SENHA_INICIAL);
   await expect(page).toHaveURL(/\/eventos$/);
-
-  // Numa segunda aba, o novo continua logado: é a sessão que precisa cair depois de desativado.
-  const segundaAba = await context.newPage();
-  await segundaAba.goto("/eventos");
-  await expect(segundaAba).toHaveURL(/\/eventos$/);
-
   await page.getByRole("button", { name: "Sair" }).click();
 
   // Dono redefine a senha do novo e lê a temporária na própria mensagem
@@ -69,6 +63,14 @@ test("dono cria usuário, redefine a senha e desativa; o novo troca a senha e pe
   await expect(page.getByText("Senha alterada")).toBeVisible();
   await page.getByRole("button", { name: "Sair" }).click();
 
+  // A sessão antiga mora noutro contexto, com cookies próprios, e só abre depois do último "Sair" do
+  // novo em `page`: o signOut é global e derrubaria uma sessão aberta antes, e aí o teste passaria
+  // por falta de sessão, não pela desativação.
+  const outroContexto = await browser.newContext();
+  const abaAntiga = await outroContexto.newPage();
+  await entrar(abaAntiga, emailNovo, "senha-trocada-123");
+  await expect(abaAntiga).toHaveURL(/\/eventos$/);
+
   // Dono desativa o novo
   await entrar(page, emailDono, senhaDono);
   await page.goto("/usuarios");
@@ -85,7 +87,8 @@ test("dono cria usuário, redefine a senha e desativa; o novo troca a senha e pe
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page.getByText("E-mail ou senha incorretos")).toBeVisible();
 
-  // E a sessão antiga (a segunda aba, aberta antes de ele ser desativado) cai para /entrar
-  await segundaAba.reload();
-  await expect(segundaAba).toHaveURL(/\/entrar/);
+  // E a sessão antiga, aberta antes de ele ser desativado e ainda com o JWT válido, cai para /entrar
+  await abaAntiga.reload();
+  await expect(abaAntiga).toHaveURL(/\/entrar/);
+  await outroContexto.close();
 });
