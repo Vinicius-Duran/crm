@@ -12,4 +12,7 @@ describe("mensagemErro", () => {
   it("erro desconhecido mostra a mensagem original", () => {
     expect(mensagemErro({ message: "fetch failed" })).toBe("Erro ao salvar: fetch failed");
   });
+  it("traduz RLS negado (42501) como sessão expirada", () => {
+    expect(mensagemErro({ code: "42501", message: "x" })).toBe("Sua sessão expirou. Entre de novo.");
+  });
 });
