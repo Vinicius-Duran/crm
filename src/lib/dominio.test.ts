@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dataIsoValida, ehUuid, entrarSchema, eventoSchema, formatarData, lerTipoParticipante, participanteSchema } from "./dominio";
+import { dataIsoValida, ehUuid, entrarSchema, eventoSchema, formatarData, lerTipoParticipante, novaSenhaSchema, participanteSchema, usuarioSchema } from "./dominio";
 
 describe("lerTipoParticipante", () => {
   it("aceita plural, caixa e acento", () => {
@@ -94,5 +94,28 @@ describe("entrarSchema", () => {
   it("recusa e-mail inválido e senha vazia", () => {
     expect(entrarSchema.safeParse({ email: "nao-e-email", senha: "x" }).success).toBe(false);
     expect(entrarSchema.safeParse({ email: "ana@email.com", senha: "" }).success).toBe(false);
+  });
+});
+
+describe("usuarioSchema", () => {
+  it("normaliza o e-mail e aceita os dois papéis", () => {
+    const r = usuarioSchema.parse({ nome: "Ana", email: " Ana@Email.com ", papel: "barbeiro", senha: "12345678" });
+    expect(r.email).toBe("ana@email.com");
+  });
+
+  it("recusa senha com menos de 8 caracteres e papel desconhecido", () => {
+    expect(usuarioSchema.safeParse({ nome: "Ana", email: "ana@email.com", papel: "dono", senha: "1234567" }).success).toBe(false);
+    expect(usuarioSchema.safeParse({ nome: "Ana", email: "ana@email.com", papel: "gerente", senha: "12345678" }).success).toBe(false);
+  });
+});
+
+describe("novaSenhaSchema", () => {
+  it("aceita quando a confirmação é igual", () => {
+    expect(novaSenhaSchema.safeParse({ senha: "12345678", confirmacao: "12345678" }).success).toBe(true);
+  });
+
+  it("recusa confirmação diferente e senha curta", () => {
+    expect(novaSenhaSchema.safeParse({ senha: "12345678", confirmacao: "87654321" }).success).toBe(false);
+    expect(novaSenhaSchema.safeParse({ senha: "1234567", confirmacao: "1234567" }).success).toBe(false);
   });
 });
