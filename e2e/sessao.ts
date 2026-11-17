@@ -29,7 +29,7 @@ export async function criarContaDeTeste(prefixo: string, modulos: string[] = ["e
 export async function criarUsuarioDeTeste(
   prefixo: string,
   contaId: string,
-  extra?: { papel?: Papel; adminPlataforma?: boolean },
+  extra?: { papel?: Papel; adminPlataforma?: boolean; nome?: string },
 ): Promise<{ id: string; email: string; senha: string }> {
   const email = `e2e-${slugDe(prefixo)}-${contador++}@exemplo.test`;
   const senha = senhaAleatoria();
@@ -38,7 +38,7 @@ export async function criarUsuarioDeTeste(
   if (error) throw error;
   const { error: erroUsuario } = await banco
     .from("usuarios")
-    .insert({ id: data.user.id, conta_id: contaId, nome: prefixo, papel: extra?.papel ?? "dono", admin_plataforma: extra?.adminPlataforma ?? false });
+    .insert({ id: data.user.id, conta_id: contaId, nome: extra?.nome ?? prefixo, papel: extra?.papel ?? "dono", admin_plataforma: extra?.adminPlataforma ?? false });
   if (erroUsuario) throw erroUsuario;
   return { id: data.user.id, email, senha };
 }

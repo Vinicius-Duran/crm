@@ -15,9 +15,12 @@ export function Casca({ usuario, children }: { usuario: Usuario | null; children
   }
   return (
     <SidebarProvider>
-      <MenuLateral visao={{ papel: usuario.papel, adminPlataforma: usuario.adminPlataforma, modulos: usuario.conta.modulos }} />
+      <MenuLateral
+        visao={{ papel: usuario.papel, adminPlataforma: usuario.adminPlataforma, modulos: usuario.conta.modulos }}
+        contaNome={usuario.conta.nome}
+      />
       <SidebarInset>
-        <BarraSuperior />
+        <BarraSuperior nome={usuario.nome} />
         <main className="mx-auto w-full max-w-7xl px-3 py-6 md:px-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>

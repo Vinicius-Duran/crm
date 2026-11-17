@@ -25,7 +25,7 @@ function alternarTema() {
   } catch {}
 }
 
-export function BarraSuperior() {
+export function BarraSuperior({ nome }: { nome: string }) {
   const passos = trilha(usePathname());
   return (
     <header className="sticky top-3 z-10 mx-3 mt-3 flex h-14 items-center gap-2 rounded-xl border bg-background/95 px-3 backdrop-blur md:mx-6">
@@ -51,7 +51,10 @@ export function BarraSuperior() {
         <Sun className="hidden dark:block" />
         <Moon className="dark:hidden" />
       </Button>
-      {/* Nome do usuário e da conta chegam na Tarefa 3; aqui só o essencial para sair. */}
+      <span className="hidden text-sm text-muted-foreground md:inline">{nome}</span>
+      <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/minha-conta" />}>
+        Minha conta
+      </Button>
       <form action={sair}>
         <Button type="submit" variant="ghost" size="sm">
           Sair

@@ -26,7 +26,7 @@ const ICONES: Record<string, LucideIcon> = {
   "/admin/contas": Building,
 };
 
-export function MenuLateral({ visao }: { visao: Visao }) {
+export function MenuLateral({ visao, contaNome }: { visao: Visao; contaNome: string }) {
   const grupos = gruposPara(visao);
   const ativo = itemAtivo(usePathname(), grupos);
   // No celular o menu é uma gaveta: fecha ao escolher um item.
@@ -42,8 +42,8 @@ export function MenuLateral({ visao }: { visao: Visao }) {
                 <QrCode className="size-4" />
               </span>
               <span className="grid leading-tight">
-                <span className="font-semibold">CRM de eventos</span>
-                <span className="text-xs text-muted-foreground">Credenciamento</span>
+                <span className="truncate font-semibold">{contaNome}</span>
+                <span className="text-xs text-muted-foreground">CRM</span>
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
