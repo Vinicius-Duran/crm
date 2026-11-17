@@ -66,11 +66,11 @@ export async function alternarAtivoDe(id: string): Promise<{ desativado: boolean
 // cada linha cruza a tabela com a API administrativa, pelo id.
 export async function listarUsuariosDaConta(
   contaId: string,
-): Promise<{ id: string; nome: string; email: string; papel: Papel; desativado: boolean }[]> {
+): Promise<{ id: string; nome: string; email: string; papel: Papel; adminPlataforma: boolean; desativado: boolean }[]> {
   const banco = dbServico();
-  const { data, error } = await banco.from("usuarios").select("id, nome, papel").eq("conta_id", contaId).order("nome");
+  const { data, error } = await banco.from("usuarios").select("id, nome, papel, admin_plataforma").eq("conta_id", contaId).order("nome");
   if (error) throw new Error(error.message);
-  const linhas = data as unknown as { id: string; nome: string; papel: Papel }[];
+  const linhas = data as unknown as { id: string; nome: string; papel: Papel; admin_plataforma: boolean }[];
   return Promise.all(
     linhas.map(async (u) => {
       const { data: autenticado } = await banco.auth.admin.getUserById(u.id);
@@ -78,6 +78,7 @@ export async function listarUsuariosDaConta(
         id: u.id,
         nome: u.nome,
         papel: u.papel,
+        adminPlataforma: u.admin_plataforma,
         email: autenticado.user?.email ?? "",
         desativado: estaDesativado(autenticado.user ?? {}),
       };

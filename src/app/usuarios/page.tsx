@@ -1,9 +1,6 @@
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BotaoApagar } from "@/components/botao-apagar";
+import { TabelaUsuarios } from "@/components/tabela-usuarios";
 import { exigirDono } from "@/lib/sessao";
-import { PAPEIS } from "@/lib/dominio";
 import { listarUsuariosDaConta } from "@/lib/usuarios";
 import { FormularioUsuario } from "./formulario";
 import { alternarAtivo, redefinirSenhaDe } from "./actions";
@@ -21,54 +18,7 @@ export default async function Usuarios() {
       <FormularioUsuario />
       <Card>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Papel</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usuarios.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>{u.nome}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{PAPEIS[u.papel]}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {u.desativado ? <Badge variant="outline">Desativado</Badge> : <Badge className="bg-sucesso/10 text-sucesso">Ativo</Badge>}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      <BotaoApagar
-                        acao={redefinirSenhaDe.bind(null, u.id)}
-                        confirmacao={`Gerar uma senha temporária para ${u.nome}?`}
-                        rotulo="Redefinir senha"
-                        variant="outline"
-                      />
-                      <BotaoApagar
-                        acao={alternarAtivo.bind(null, u.id)}
-                        confirmacao={u.desativado ? `Reativar ${u.nome}?` : `Desativar ${u.nome}?`}
-                        rotulo={u.desativado ? "Reativar" : "Desativar"}
-                        variant={u.desativado ? "outline" : "destructive"}
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {usuarios.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">
-                    Nenhum usuário ainda.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <TabelaUsuarios usuarios={usuarios} redefinirSenha={redefinirSenhaDe} alternarAtivo={alternarAtivo} protegerAdmin />
         </CardContent>
       </Card>
     </section>
