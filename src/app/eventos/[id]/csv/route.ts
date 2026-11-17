@@ -1,4 +1,4 @@
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { ehUuid } from "@/lib/dominio";
 import { csvDoEvento, type EventoCsv, type ParticipanteCsv } from "@/lib/csv";
 import { nomeArquivo } from "@/lib/zip";
@@ -8,8 +8,9 @@ const LOTE = 1000;
 
 async function todosParticipantes(eventoId: string): Promise<ParticipanteCsv[]> {
   const todos: ParticipanteCsv[] = [];
+  const banco = await dbUsuario();
   for (let de = 0; ; de += LOTE) {
-    const { data, error } = await db()
+    const { data, error } = await banco
       .from("participantes")
       .select("nome, documento, data_nascimento, email, telefone, empresa, tipo, checkin_em")
       .eq("evento_id", eventoId)
@@ -26,7 +27,7 @@ async function todosParticipantes(eventoId: string): Promise<ParticipanteCsv[]> 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!ehUuid(id)) return new Response("Evento não encontrado", { status: 404 });
-  const { data: evento } = await db().from("eventos").select("nome, tipo, data, empresa:empresas(nome)").eq("id", id).maybeSingle();
+  const { data: evento } = await (await dbUsuario()).from("eventos").select("nome, tipo, data, empresa:empresas(nome)").eq("id", id).maybeSingle();
   if (!evento) return new Response("Evento não encontrado", { status: 404 });
   const e = evento as unknown as Omit<EventoCsv, "empresa"> & { empresa: { nome: string } };
   const csv = csvDoEvento({ ...e, empresa: e.empresa.nome }, await todosParticipantes(id));

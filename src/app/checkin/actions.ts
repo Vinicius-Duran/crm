@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { buscarParticipantes } from "@/lib/busca";
 import { ehUuid, TIPOS_PARTICIPANTE, type TipoParticipante } from "@/lib/dominio";
 
@@ -32,7 +32,8 @@ export async function checkinPorParticipante(participanteId: string, eventoId: s
 }
 
 async function registrar(coluna: "codigo" | "id", valor: string, eventoId: string | null): Promise<ResultadoCheckin> {
-  const { data, error } = await db().from("participantes").select(CAMPOS).eq(coluna, valor).maybeSingle();
+  const banco = await dbUsuario();
+  const { data, error } = await banco.from("participantes").select(CAMPOS).eq(coluna, valor).maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return { status: "desconhecido" };
   const l = data as unknown as Linha;
@@ -40,7 +41,7 @@ async function registrar(coluna: "codigo" | "id", valor: string, eventoId: strin
 
   const base = { nome: l.nome, tipo: TIPOS_PARTICIPANTE[l.tipo], empresa: l.empresa, evento: l.evento.nome };
   // Um único UPDATE condicionado a checkin_em vazio: dois celulares no mesmo QR dão um "ok" e um "repetido".
-  const { data: marcadas, error: e2 } = await db()
+  const { data: marcadas, error: e2 } = await banco
     .from("participantes")
     .update({ checkin_em: new Date().toISOString() })
     .eq("id", l.id)
@@ -50,7 +51,7 @@ async function registrar(coluna: "codigo" | "id", valor: string, eventoId: strin
   revalidatePath(`/eventos/${l.evento_id}`);
   if (marcadas.length) return { status: "ok", ...base, checkinEm: marcadas[0].checkin_em as string };
 
-  const { data: atual } = await db().from("participantes").select("checkin_em").eq("id", l.id).single();
+  const { data: atual } = await banco.from("participantes").select("checkin_em").eq("id", l.id).single();
   return { status: "repetido", ...base, checkinEm: (atual?.checkin_em as string | undefined) ?? l.checkin_em ?? "" };
 }
 

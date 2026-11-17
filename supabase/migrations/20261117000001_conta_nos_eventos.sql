@@ -1,6 +1,5 @@
 -- Fatia 1 do SaaS, Tarefa 2: isola empresas/eventos/participantes por conta (RLS).
--- NÃO APLICADA em produção nesta execução: falta a confirmação do backup (pendência do
--- autor na issue #40). Ver .tarefas/42/IMPLEMENTACAO.md.
+-- Dados existentes (empresa VM Events) vão para a conta vm-events (ver migração anterior).
 
 alter table empresas add column conta_id uuid references contas (id) on delete cascade;
 alter table eventos add column conta_id uuid references contas (id) on delete cascade;

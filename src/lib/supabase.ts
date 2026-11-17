@@ -18,9 +18,6 @@ export function dbServico(): SupabaseClient {
   return cliente;
 }
 
-// some na Tarefa 2
-export const db = dbServico;
-
 // Cliente com o token da sessão do cookie: é o padrão em páginas, Server Actions e rotas
 // autenticadas. As respostas passam pelo RLS, então cada conta só vê os próprios dados.
 export async function dbUsuario(): Promise<SupabaseClient> {

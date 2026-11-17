@@ -12,9 +12,10 @@ const db = () => createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SE
 
 let email: string;
 let senha: string;
+let contaId: string;
 
 test.beforeAll(async () => {
-  const { contaId } = await criarContaDeTeste(PREFIXO, ["eventos"]);
+  ({ contaId } = await criarContaDeTeste(PREFIXO, ["eventos"]));
   const usuario = await criarUsuarioDeTeste(PREFIXO, contaId);
   email = usuario.email;
   senha = usuario.senha;
@@ -45,10 +46,12 @@ test("evento com mais de 1.000 participantes: contadores, paginação de 20, CSV
   test.setTimeout(240_000);
   const tag = `${PREFIXO} ${info.project.name}`;
   await entrar(page, email, senha);
-  const { data: empresa } = await db().from("empresas").insert({ nome: `${tag} Acme` }).select("id").single();
+  // service_role não autentica como usuário: o default conta_id = conta_atual() não resolve, por
+  // isso as duas tabelas levam o conta_id explícito aqui.
+  const { data: empresa } = await db().from("empresas").insert({ nome: `${tag} Acme`, conta_id: contaId }).select("id").single();
   const { data: evento } = await db()
     .from("eventos")
-    .insert({ nome: `${tag} Convenção`, tipo: "kickoff", data: "2026-12-01", empresa_id: empresa!.id })
+    .insert({ nome: `${tag} Convenção`, tipo: "kickoff", data: "2026-12-01", empresa_id: empresa!.id, conta_id: contaId })
     .select("id")
     .single();
   const eventoId = evento!.id as string;

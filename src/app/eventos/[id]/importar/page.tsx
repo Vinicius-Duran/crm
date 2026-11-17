@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { ehUuid } from "@/lib/dominio";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { Importador } from "./importador";
 
 export default async function Importar({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!ehUuid(id)) notFound();
-  const { data: evento } = await db().from("eventos").select("nome").eq("id", id).maybeSingle();
+  const { data: evento } = await (await dbUsuario()).from("eventos").select("nome").eq("id", id).maybeSingle();
   if (!evento) notFound();
   return (
     <section className="grid gap-4">

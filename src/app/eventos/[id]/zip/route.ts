@@ -1,7 +1,7 @@
 import { ehUuid } from "@/lib/dominio";
 import { carregarCredenciais } from "@/lib/credencial";
 import { gerarCredencialPdf } from "@/lib/pdf";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { LOTE_ZIP, montarZip } from "@/lib/zip";
 
 // Um lote do ZIP do evento: ?lote=0, 1, 2… O navegador pede todos e junta (baixar-zip.tsx).
@@ -14,7 +14,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!/^\d+$/.test(param) || !Number.isSafeInteger(de)) return new Response("Lote inválido", { status: 400 });
   const [credenciais, { count, error }] = await Promise.all([
     carregarCredenciais({ eventoId: id, de, ate: de + LOTE_ZIP - 1 }),
-    db().from("participantes").select("id", { count: "exact", head: true }).eq("evento_id", id),
+    (await dbUsuario()).from("participantes").select("id", { count: "exact", head: true }).eq("evento_id", id),
   ]);
   if (error) throw new Error(error.message);
   if (credenciais.length === 0) return new Response("Nenhum participante neste lote", { status: 404, headers: { "X-Total": String(count ?? 0) } });

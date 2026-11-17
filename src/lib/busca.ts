@@ -1,5 +1,5 @@
 import "server-only";
-import { db } from "./supabase";
+import { dbUsuario } from "./supabase";
 import { ehUuid } from "./dominio";
 import { normalizarDocumento } from "./documento";
 import { limparTermo } from "./texto";
@@ -19,7 +19,7 @@ export async function buscarParticipantes(f: { termo: string; eventoId: string |
   const termo = limparTermo(f.termo);
   if (termo.length < 2) return [];
   const documento = normalizarDocumento(f.termo);
-  let q = db()
+  let q = (await dbUsuario())
     .from("participantes")
     .select("id, nome, documento, empresa, checkin_em, evento:eventos(nome)")
     .order("nome_busca")
@@ -33,7 +33,7 @@ export async function buscarParticipantes(f: { termo: string; eventoId: string |
 }
 
 export async function listarEmpresas(): Promise<{ id: string; nome: string }[]> {
-  const { data, error } = await db().from("empresas").select("id, nome").order("nome");
+  const { data, error } = await (await dbUsuario()).from("empresas").select("id, nome").order("nome");
   if (error) throw new Error(error.message);
   return data;
 }

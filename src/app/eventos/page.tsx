@@ -3,11 +3,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { db } from "@/lib/supabase";
+import { dbUsuario } from "@/lib/supabase";
 import { formatarData, TIPOS_EVENTO, type TipoEvento } from "@/lib/dominio";
 
 export default async function Eventos() {
-  const { data, error } = await db().from("eventos").select("id, nome, tipo, data, empresa:empresas(nome), participantes(count)").order("data", { ascending: false });
+  const { data, error } = await (await dbUsuario()).from("eventos").select("id, nome, tipo, data, empresa:empresas(nome), participantes(count)").order("data", { ascending: false });
   if (error) throw new Error(error.message);
   const eventos = data as unknown as { id: string; nome: string; tipo: TipoEvento; data: string; empresa: { nome: string }; participantes: { count: number }[] }[];
 

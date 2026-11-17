@@ -175,3 +175,14 @@ test("empresa, evento, participantes, importação, PDF, check-in e CSV", async 
   );
   expect(linhas.find((l) => l.includes("Ana Importada"))).toMatch(/;Gama;Convidado;Não;$/);
 });
+
+// RLS: o evento criado pela conta de teste principal não pode aparecer para um usuário de outra conta.
+test("segundo usuário de outra conta não vê o evento", async ({ page }, info) => {
+  const tag = `${PREFIXO} ${info.project.name}`;
+  const prefixoOutro = `${PREFIXO} outra`;
+  const { contaId } = await criarContaDeTeste(prefixoOutro, ["eventos"]);
+  const outro = await criarUsuarioDeTeste(prefixoOutro, contaId);
+  await entrar(page, outro.email, outro.senha);
+  await page.goto("/eventos");
+  await expect(page.getByText(`${tag} Kickoff`)).toHaveCount(0);
+});
