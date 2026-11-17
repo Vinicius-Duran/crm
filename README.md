@@ -29,7 +29,6 @@ eventos ficam separados por conta no próprio banco: um usuário só lê e grava
 | `SUPABASE_URL` | Endereço do projeto (Supabase → Project Settings → API). |
 | `SUPABASE_ANON_KEY` | Chave publicável (`anon`). Usada só no servidor, no login e na renovação da sessão; o navegador não recebe chave nenhuma. Sem ela ninguém entra. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Chave secreta, ignora as regras de acesso do banco. Só a usam a área `/admin`, o cadastro de usuários e o `npm run primeiro-admin`. Nunca no Git, nunca com prefixo `NEXT_PUBLIC_`. |
-| `ADMIN_USER` e `ADMIN_PASSWORD` | Transição: usuário e senha do navegador (HTTP Basic Auth), aceitos como alternativa ao login. Saem da Vercel na ordem descrita em "Ligar o login em produção". |
 
 ### Primeiro acesso
 
@@ -93,8 +92,7 @@ colando o SQL no SQL Editor do painel. Todas as tabelas têm RLS ligado: nas de 
 1. Importe o repositório na Vercel (framework Next.js, sem ajuste de build).
 2. Em *Settings → Environment Variables*, cadastre `SUPABASE_URL`, `SUPABASE_ANON_KEY` e
    `SUPABASE_SERVICE_ROLE_KEY`, em production e preview. Quem abrir qualquer página sem sessão vai
-   para `/entrar`; com `ADMIN_USER` e `ADMIN_PASSWORD` cadastradas, recebe antes o pedido de senha do
-   navegador (só `/entrar` dispensa).
+   para `/entrar`.
 3. Em *Settings → Deployment Protection*, desligue a Vercel Authentication, senão o navegador pede
    dois logins (o da Vercel e o do sistema).
 4. E-mail automático (opcional): crie a conta no Resend, verifique o domínio e preencha
@@ -103,16 +101,13 @@ colando o SQL no SQL Editor do painel. Todas as tabelas têm RLS ligado: nas de 
 
 ### Ligar o login em produção
 
-O Basic Auth continua aceito até o primeiro usuário existir em produção. Nesta ordem, para não ficar
-trancado do lado de fora:
+Sem usuário em produção, ninguém passa de `/entrar`. Para criar o primeiro, nesta ordem:
 
 1. Cadastre `SUPABASE_ANON_KEY` na Vercel (production e preview) e faça um novo deploy.
 2. No seu computador, aponte o `.env.local` para o projeto Supabase de produção (`SUPABASE_URL` e
    `SUPABASE_SERVICE_ROLE_KEY` de lá) e rode `npm run primeiro-admin -- <email> <senha> [nome]`.
 3. Abra `https://<seu-domínio>/entrar`, entre com esse e-mail e senha e confira o grupo "Plataforma"
    no menu.
-4. **Só então** remova `ADMIN_USER` e `ADMIN_PASSWORD` da Vercel e faça um novo deploy. O código do
-   Basic Auth sai do sistema na tarefa seguinte do plano.
 
 ## No dia do evento
 
