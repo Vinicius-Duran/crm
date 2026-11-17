@@ -106,8 +106,9 @@ diferença de custo é de dias.
 - O menu lateral mostra só os módulos ligados na conta e permitidos ao papel. Barbeiro não vê
   Configurações nem Clientes de outros. A conta aparece no cabeçalho do menu (no lugar de "CRM de
   eventos").
-- Variáveis novas: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (chave publicável; o
-  navegador só a usa para login e renovação de sessão, nunca para consultar dados).
+- Variável nova: `SUPABASE_ANON_KEY` (chave publicável). O login e a troca de senha são Server
+  Actions, e a renovação da sessão é no `proxy.ts`; por isso o navegador não recebe chave nenhuma
+  e não há cliente Supabase no lado do cliente.
 
 ### 1.3 Isolamento no banco
 
