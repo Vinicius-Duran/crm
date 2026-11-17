@@ -20,6 +20,7 @@ adivinhar, nunca usar valor de exemplo.
 | Item | Valor |
 |---|---|
 | Empresa | Vinicius Duran (projeto pessoal) |
+| Plataforma | `github` |
 | Organização (owner) no GitHub | `Vinicius-Duran` (conta de usuário, não organização) |
 | Repositório padrão das issues | `Vinicius-Duran/crm` |
 | Responsável das tarefas | `Vinicius-Duran` |
